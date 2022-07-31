@@ -1,3 +1,7 @@
+from dataclasses import dataclass
+from urllib.parse import urlparse
+
+
 @dataclass
 class DownloadMetadatum:
     path: str

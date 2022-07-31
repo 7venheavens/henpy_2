@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import requests
+from party_downloader.models.download_metadatum import DownloadMetadatum
 from party_downloader.models.party_page import PartyCreatorPage, PartyPostPage
 
 import logging
