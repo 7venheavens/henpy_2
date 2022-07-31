@@ -1,3 +1,8 @@
+from bs4 import BeautifulSoup
+from urllib.parse import urlparse
+import requests
+
+
 class PartyWebData:
     def __init__(self, url, page_data=None):
         self._page_data = None

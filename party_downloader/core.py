@@ -1,12 +1,6 @@
-from bs4 import BeautifulSoup
 import os
 from pathlib import Path
-from dataclasses import dataclass
-import re
 import requests
-from urllib.parse import urlparse, urljoin
-from functools import cached_property
-from copy import copy
 from party_downloader.models.party_page import PartyCreatorPage, PartyPostPage
 
 import logging
