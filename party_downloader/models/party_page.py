@@ -33,7 +33,7 @@ class PartyCreatorPage(PartyWebData):
         last_page_url = urls[-1]
         if last_page_url["title"] == "Next page":
             last_page_url = urls[-2]
-        return last_page_url["href"]
+        return urljoin(self.root_url, last_page_url["href"])
 
     @property
     def pages(self):

@@ -26,7 +26,7 @@ class PartyWebData:
         # lazily gets the page data when required
         if not self._page_data:
             resp = requests.get(self.parsed_url.geturl())
-            self._page_data = resp.txt
+            self._page_data = resp.text
 
         return self._page_data
 
@@ -63,5 +63,7 @@ class PartyWebData:
         parsed = urlparse(url)
         if not parsed.query:
             return {}
-        res = {key: val for key, val in (arg.split("=") for arg in parsed.query.split("&"))}
+        res = {
+            key: val for key, val in (arg.split("=") for arg in parsed.query.split("&"))
+        }
         return res

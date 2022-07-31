@@ -6,9 +6,13 @@ from urllib.parse import urlparse
 
 @pytest.fixture
 def creator_page():
-    with open(Path(__file__).parent / Path("data/creator_page.html"), encoding="utf-8") as f:
+    with open(
+        Path(__file__).parent / Path("data/creator_page.html"), encoding="utf-8"
+    ) as f:
         page_data = f.read()
-    page = PartyCreatorPage("https://kemono.party/fantia/user/17779", page_data=page_data)
+    page = PartyCreatorPage(
+        "https://kemono.party/fantia/user/17779", page_data=page_data
+    )
     return page
 
 
@@ -35,6 +39,7 @@ def test_pages(creator_page):
     # test that it's going in reverse order
     assert offsets == [f"o={offset}" for offset in range(850, -1, -25)]
     assert pages[0].parsed_url.netloc == "kemono.party"
+    assert pages[0].parsed_url.scheme == "https"
 
 
 def test_get_child_posts(creator_page):
