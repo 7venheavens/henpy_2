@@ -49,7 +49,11 @@ class PartyCreatorPage(PartyWebData):
         # BAD. MOVE THIS OUT
         last_page_offset = int(self.get_url_query_params(self.last_page_url)["o"])
         for offset in range(last_page_offset, -1, -25):
-            yield PartyCreatorPage(parse_result._replace(netloc=self.parsed_url.netloc, query=f"o={offset}").geturl())
+            yield PartyCreatorPage(
+                parse_result._replace(
+                    netloc=self.parsed_url.netloc, query=f"o={offset}"
+                ).geturl()
+            )
 
     def _get_cards(self):
         return self.soup.find_all("article", {"class": "post-card"})
@@ -58,8 +62,6 @@ class PartyCreatorPage(PartyWebData):
     def child_posts(self):
         for card_soup in self._get_cards():
             post_href = card_soup.find("a")["href"]
-            if PartyPostPage.get_key(post_href) in blacklist:
-                continue
             post_url = urljoin(self.root_url, post_href)
             post = PartyPostPage.from_url(post_url)
             yield post
@@ -67,8 +69,6 @@ class PartyCreatorPage(PartyWebData):
     def get_download_metadata(self):
         """Download metadata is an iterable of DownloadMetadatum objects"""
         for post_page in self.get_child_posts():
-            if post_page.key in blacklist:
-                continue
             for metadatum in post_page.get_download_metadata():
                 yield metadatum
 
