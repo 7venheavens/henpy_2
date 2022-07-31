@@ -11,6 +11,10 @@ def post_page():
     return page
 
 
+def test_key(post_page):
+    assert post_page.key == ("fantia", "17779", "1235253")
+
+
 # def test_get_download_metadata(post_page):
 
 #     data = list(post_page.get_download_metadata())
