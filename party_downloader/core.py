@@ -39,10 +39,7 @@ class Downloader:
             logger.info(f"Downloading {datum.filename}")
             outpath = outdir / Path(datum.filename)
             if self.execute:
-                resp = requests.get(datum.path)
-                with open(outpath, "wb") as f:
-                    f.write(resp.content)
-                print(f"Written to {outpath}, {outdir}, {datum.filename}")
+                self.download_file(datum, outdir)
 
     def download_creator(self, creator_url):
         """
@@ -60,12 +57,16 @@ class Downloader:
                 continue
             logger.info(f"Processing page {page.parsed_url}")
             for post in posts[::-1]:
-                if post.key in blacklist:
+                if post.key in self.blacklist:
                     continue
                 self.download_post(post)
 
-    def download_file(self, download_metadata):
+    def download_file(self, outdir, datum: DownloadMetadatum):
         """
         Downloads the desired data to disk
         """
-        pass
+        resp = requests.get(datum.path)
+        outpath = outdir / Path(datum.filename)
+        with open(outpath, "wb") as f:
+            f.write(resp.content)
+        print(f"Written to {outpath}, {outdir}, {datum.filename}")
