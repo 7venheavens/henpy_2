@@ -39,10 +39,10 @@ class Downloader:
 
     def download_post(self, post: PartyPostPage):
         """Downloads all data for a given post. Assumes that a post is complete if not found"""
+        outdir = self.outdir / post.dir_prefix
+        os.makedirs(outdir, exist_ok=True)
         for datum in post.get_download_metadata():
             logger.info(f"Downloading {datum.filename}")
-            outdir = self.outdir / Path(datum.target_dir)
-            os.makedirs(outdir, exist_ok=True)
             outpath = outdir / Path(datum.filename)
             if self.execute:
                 resp = requests.get(datum.path)

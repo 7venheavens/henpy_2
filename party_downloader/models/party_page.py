@@ -86,7 +86,6 @@ class PartyPostPage(PartyWebData):
         for esoup in attachment_soup:
             md = DownloadMetadatum(
                 urljoin(self.root_url, esoup["href"]),
-                self.dir_prefix,
                 key=self.key + (esoup["href"],),
                 filetype="attachment",
             )
@@ -94,7 +93,6 @@ class PartyPostPage(PartyWebData):
         for isoup in image_soup:
             md = DownloadMetadatum(
                 urljoin(self.root_url, isoup["href"]),
-                self.dir_prefix,
                 key=self.key + (isoup["href"],),
                 filetype="image",
             )
