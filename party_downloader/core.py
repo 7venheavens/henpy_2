@@ -50,7 +50,7 @@ class Downloader:
         """
         page = PartyCreatorPage.from_url(creator_url)
         logger.info(f"Processing Creator {page.creator_id}")
-        # iteratet over the pages in reverse order
+        # iterate over the pages in reverse order
         for page in page.pages:
             # Check if the first post is already downloaded (page fully downloaded)
             posts = list(page.child_posts)
