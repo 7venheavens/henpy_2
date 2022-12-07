@@ -1,13 +1,17 @@
 import re
 from urllib.parse import urlparse, urljoin
-from party_downloader.models.party_web_data import PartyWebData
+from party_downloader.models.web_data import WebData
 from party_downloader.models.download_metadatum import DownloadMetadatum
 from functools import cached_property
 from pathlib import Path
 
 
-class PartyCreatorPage(PartyWebData):
-    url_regex = re.compile(r"""\/(\w+)\/user\/(\d+)""")
+class PartyCreatorPage(WebData):
+    URL_KEY_REGEX = re.compile(r"""\/(\w+)\/user\/(\d+)""")
+
+    @property
+    def creator_id(self):
+        return self.key[1]
 
     @property
     def next_page_url(self):

@@ -3,7 +3,11 @@ from urllib.parse import urlparse
 import requests
 
 
-class PartyWebData:
+class WebData:
+    """Basic Class to store information from a scraped webpage"""
+
+    URL_KEY_REGEX = None
+
     def __init__(self, url, page_data=None):
         self._page_data = None
         self._soup = None
@@ -12,7 +16,7 @@ class PartyWebData:
             self._page_data = page_data
 
     def __repr__(self):
-        return f"<PartyWebData: {self.parsed_url.geturl()}>"
+        return f"<WebData: {self.parsed_url.geturl()}>"
 
     @property
     def soup(self):
@@ -45,15 +49,11 @@ class PartyWebData:
 
     @classmethod
     def get_key(cls, path):
-        return cls.url_regex.search(path).groups()
+        return cls.URL_KEY_REGEX.search(path).groups()
 
     @property
     def key(self):
         return self.get_key(self.parsed_url.path)
-
-    @property
-    def creator_id(self):
-        return self.key[1]
 
     @property
     def root_url(self):
