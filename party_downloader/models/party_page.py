@@ -7,6 +7,8 @@ from pathlib import Path
 
 
 class PartyCreatorPage(WebData):
+    """Represents the Creator's root page from a party-like site"""
+
     URL_KEY_REGEX = re.compile(r"""\/(\w+)\/user\/(\d+)""")
 
     @property
@@ -15,6 +17,7 @@ class PartyCreatorPage(WebData):
 
     @property
     def next_page_url(self):
+        # Gets the URL to the next page
         pages = self.soup.find_all("menu")[0]
         next_page = pages.find("a", {"title": "Next page"})
         next_url = (urljoin(self.root_url, next_page["href"]),)
@@ -71,7 +74,7 @@ class PartyCreatorPage(WebData):
             yield post
 
     def get_download_metadata(self):
-        """Download metadata is an iterable of DownloadMetadatum objects"""
+        """Download metadata is an iterable of DownloadMetadatum objects that need to be downloaded"""
         for post_page in self.get_child_posts():
             for metadatum in post_page.get_download_metadata():
                 yield metadatum
@@ -80,9 +83,11 @@ class PartyCreatorPage(WebData):
         pass
 
 
-class PartyPostPage(PartyWebData):
+class PartyPostPage(WebData):
+    """Represents an individual post from a party like site"""
+
     # e.g. .party/fantia/user/1470/post/925022
-    url_regex = re.compile(r"""\/(\w+)\/user\/(\d+)\/post\/(\d+)""")
+    URL_KEY_REGEX = re.compile(r"""\/(\w+)\/user\/(\d+)\/post\/(\d+)""")
 
     @property
     def dir_prefix(self):
