@@ -67,3 +67,12 @@ class WebData:
             key: val for key, val in (arg.split("=") for arg in parsed.query.split("&"))
         }
         return res
+
+    def clean_url_link(self, link):
+        """Cleans a link to be a full URL"""
+        if link.startswith("//"):
+            return "https:" + link
+
+        if link.startswith("/"):
+            return f"{self.root_url}{link}"
+        return link
