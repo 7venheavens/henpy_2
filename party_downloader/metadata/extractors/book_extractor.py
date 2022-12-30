@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod, abstractproperty
 from typing import Literal
-from party_downloader.models.metadata.raw_tag import RawTag
+from party_downloader.metadata.raw_tag import RawTag
 
 
 class BookExtractor(ABC):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from party_downloader.models.metadata.raw_tag import RawTag
+from party_downloader.metadata.raw_tag import RawTag
 from typing import Literal
 
 

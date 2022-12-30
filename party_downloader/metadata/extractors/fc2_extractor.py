@@ -1,5 +1,5 @@
 from __future__ import annotations
-from party_downloader.models.metadata.extractors.base_metadata_extractor import (
+from party_downloader.metadata.extractors.base_metadata_extractor import (
     BaseMetadataExtractor,
 )
 from party_downloader.models.web_data import WebData

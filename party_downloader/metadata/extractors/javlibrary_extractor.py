@@ -1,5 +1,5 @@
 from __future__ import annotations
-from party_downloader.models.metadata.extractors.base_metadata_extractor import (
+from party_downloader.metadata.extractors.base_metadata_extractor import (
     BaseMetadataExtractor,
 )
 from party_downloader.models.web_data import WebData
@@ -7,61 +7,32 @@ from functools import cached_property
 from datetime import date
 import re
 
-# maps the ones defined by columns
-singleton_mapping = {
-    "ID:": "id",
-    "Release Date:": "release_date",
-    "Length:": "length",
-    "Director:": "director",
-    "Studio:": "studio",
-    "Label:": "label",
-    "Series": "series",
-    # TODO add japanese
-}
 
-
-class JavBusExtractor(BaseMetadataExtractor):
+class JavLibraryExtractor(BaseMetadataExtractor):
     def __init__(self, webdata: WebData):
         super().__init__(webdata)
         # Soup derivatives for ease of use
-        self._container = webdata.soup.find("div", class_="container")
-        self._info = self._container.find("div", class_="info")
-        # Get the singleton data (non-list)
-        holder = self._info.find_all("span", class_="header")
-        self._singletons = {}
-        for span in holder:
-            key = span.text
-            if key in singleton_mapping:
-                self._singletons[singleton_mapping[key]] = span
+        self._info = webdata.soup.find(id="video_id")
 
     @cached_property
     def id(self) -> str:
-        return self._singletons["id"].next_sibling.next_sibling.text.strip()
+        return self._info.find(id="video_id").find(class_="text").text.strip()
 
     @cached_property
     def title(self) -> str:
-        return self._container.find("h3").text.strip()
+        return self.webdata.soup.find("h3", class_="post-title text").text.strip()
 
     @property
     def producer(self) -> str:
-        producer = self._singletons.get("director", "")
-        if not producer:
-            return ""
-        return producer.find_next_sibling("a").text.strip()
+        return self._info.find(id="video_director").find(class_="text").text.strip()
 
     @property
     def publisher(self) -> str:
-        publisher = self._singletons.get("studio", "")
-        if not publisher:
-            return ""
-        return publisher.find_next_sibling("a").text.strip()
+        return self._info.find(id="video_maker").find(class_="text").text.strip()
 
     @property
     def studio(self) -> str:
-        studio = self._singletons.get("label", "")
-        if not studio:
-            return ""
-        return studio.find_next_sibling("a").text.strip()
+        return self._info.find(id="video_label").find(class_="text").text.strip()
 
     @property
     def series(self) -> str:
@@ -92,20 +63,16 @@ class JavBusExtractor(BaseMetadataExtractor):
 
     @property
     def release_date(self) -> date | None:
-        date_element = self._singletons.get("release_date", None)
-        if not date_element:
-            return None
-        raw_date = date_element.next_sibling.text.strip()
+        raw_date = self._info.find(id="video_date").find(class_="text").text.strip()
         if not raw_date:
             return None
         return date.fromisoformat(raw_date)
 
     @property
     def duration(self) -> int | None:
-        duration_element = self._singletons.get("length", None)
-        if not duration_element:
-            return None
-        raw_duration = duration_element.next_sibling.text.strip()
+        raw_duration = (
+            self._info.find(id="video_length").find(class_="text").text.strip()
+        )
         if not raw_duration:
             return None
         return int(re.sub("[^0-9]", "", raw_duration))

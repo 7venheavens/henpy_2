@@ -1,4 +1,4 @@
-from party_downloader.models.metadata.extractors.javbus_extractor import JavBusExtractor
+from party_downloader.metadata.extractors.javbus_extractor import JavBusExtractor
 from party_downloader.models.web_data import WebData
 from datetime import date
 from pathlib import Path

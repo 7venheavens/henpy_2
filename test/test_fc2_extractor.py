@@ -1,4 +1,4 @@
-from party_downloader.models.metadata.extractors.fc2_extractor import FC2Extractor
+from party_downloader.metadata.extractors.fc2_extractor import FC2Extractor
 from party_downloader.models.web_data import WebData
 from datetime import date
 import pytest
