@@ -18,6 +18,19 @@ def post_page():
 
 
 @pytest.fixture
+def post_page_attachments():
+    with open(
+        Path(__file__).parent / Path("data/post_page_attachments.html"),
+        encoding="utf-8",
+    ) as f:
+        page_data = f.read()
+    page = PartyPostPage(
+        "https://kemono.party/fantia/user/20001/post/1276815", page_data=page_data
+    )
+    return page
+
+
+@pytest.fixture
 def creator_page():
     with open(
         Path(__file__).parent / Path("data/creator_page.html"), encoding="utf-8"
@@ -30,14 +43,24 @@ def creator_page():
 
 
 def test_download_post(mocker, post_page, tmp_path):
-    mock_download_file = mocker.patch("party_downloader.core.Downloader.download_file")
+    mock_download_file = mocker.patch("party_downloader.core.Downloader._download_file")
 
     downloader = Downloader(tmp_path, True)
-    downloader.download_post(post_page)
+    downloader._download_post(post_page)
     args = mock_download_file.call_args_list
-    assert str(args[-1][0][0].filename) == "f6184713-c184-48e8-901a-539317502634.jpe"
-    assert str(args[0][0][0].filename) == "ff012c63-11be-43cc-bf50-b82ee8779114.jpe"
-    assert str(args[1][0][0].filename) == "0386819f-6e2e-41b1-b7d2-47aec07d1f54.jpe"
+    assert str(args[-1][0][1].filename) == "f6184713-c184-48e8-901a-539317502634.jpe"
+    assert str(args[0][0][1].filename) == "ff012c63-11be-43cc-bf50-b82ee8779114.jpe"
+    assert str(args[1][0][1].filename) == "0386819f-6e2e-41b1-b7d2-47aec07d1f54.jpe"
+
+
+def test_download_post_with_attachments(mocker, post_page_attachments, tmp_path):
+    mock_download_file = mocker.patch("party_downloader.core.Downloader._download_file")
+    downloader = Downloader(tmp_path, True)
+    downloader._download_post(post_page_attachments)
+    args = mock_download_file.call_args_list
+    assert str(args[0][0][1].filename) == "20220518_フォーミダブルsampleえちえちver..mp4"
+    assert str(args[2][0][1].filename) == "20220518_フォーミダブルsample800.mp4"
+    assert len(args) == 8
 
 
 def test_download_post_existing(mocker, post_page, tmp_path):
