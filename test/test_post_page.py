@@ -5,9 +5,13 @@ from pathlib import Path
 
 @pytest.fixture
 def post_page():
-    with open(Path(__file__).parent / Path("data/post_page.html"), encoding="utf-8") as f:
+    with open(
+        Path(__file__).parent / Path("data/post_page.html"), encoding="utf-8"
+    ) as f:
         page_data = f.read()
-    page = PartyPostPage("https://kemono.party/fantia/user/17779/post/1235253", page_data=page_data)
+    page = PartyPostPage(
+        "https://kemono.party/fantia/user/17779/post/1235253", page_data=page_data
+    )
     return page
 
 
