@@ -3,13 +3,24 @@ from dataclasses import dataclass
 from party_downloader.models.web_data import WebData
 from datetime import date
 from functools import cached_property
+from xml.dom import minidom
+import xml.etree.cElementTree as ET
+from abc import ABC, abstractmethod
 
 
-class BaseMetadataExtractor:
-    """Base class for the extraction of metadata from some metadata page"""
+class BaseMetadataExtractor(ABC):
+    """Base class for the extraction of metadata from some metadata page
+    Extractors are used to extract metadata from an acquired metadata page
+    """
 
     def __init__(self, webdata: WebData):
         self.webdata = webdata
+        # self.check_valid()
+
+    # @abstractmethod
+    # def check_valid(self) -> bool:
+    #     """Checks if the metadata page is valid and does not point to a "did not find" type age"""
+    #     pass
 
     @property
     def id(self) -> str:
@@ -84,3 +95,39 @@ class BaseMetadataExtractor:
             "cover_url": self.cover_url,
             "thumbnail_urls": self.thumbnail_urls,
         }
+
+    @cached_property
+    def metadata_nfo(self) -> str:
+        """Returns the metadata in nfo format"""
+        root = ET.Element("movie")
+        title = ET.SubElement(root, "title")
+        title.text = self.title
+        director = ET.SubElement(root, "director")
+        director.text = self.producer
+        studio = ET.SubElement(root, "studio")
+        studio.text = self.studio
+        for genre in self.tags:
+            genre_tag = ET.SubElement(root, "genre")
+            genre_tag.text = genre[1]
+        for actor in self.actors:
+            actor_tag = ET.SubElement(root, "actor")
+            actor_name_tag = ET.SubElement(actor_tag, "name")
+            actor_name_tag.text = actor
+            actor_altname_tag = ET.SubElement(actor_tag, "altname")
+            actor_altname_tag.text = actor
+            actor_thumb_tag = ET.SubElement(actor_tag, "thumb")
+            actor_thumb_tag.text = ""
+            actor_role_tag = ET.SubElement(actor_tag, "role")
+            actor_role_tag.text = "Actress"
+
+        plot = ET.SubElement(root, "plot")
+        plot.text = self.description
+        id = ET.SubElement(root, "id")
+        id.text = self.id
+        year = ET.SubElement(root, "year")
+        year.text = str(self.release_date.year)
+        premiered = ET.SubElement(root, "premiered")
+        premiered.text = self.release_date.isoformat()
+
+        dom = minidom.parseString(ET.tostring(root))
+        return dom.toprettyxml(indent="  ")
