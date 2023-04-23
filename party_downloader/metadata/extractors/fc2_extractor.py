@@ -14,6 +14,11 @@ class FC2Extractor(BaseMetadataExtractor):
         # Soup derivatives for ease of use
         self._container = webdata.soup
 
+    def check_valid(self) -> None:
+        a = True
+        if not a:
+            raise ValueError("Page does not contain valid data")
+
     @cached_property
     def id(self) -> str:
         return (
