@@ -32,15 +32,28 @@ class Downloader:
                     blacklist.add(key)
         return blacklist
 
-    def download_post(self, post: PartyPostPage):
+    def _download_post(self, post: PartyPostPage):
         """Downloads all data for a given post. Assumes that a post is complete if not found"""
         outdir = self.outdir / post.dir_prefix
         os.makedirs(outdir, exist_ok=True)
         for datum in post.get_download_metadata():
             logger.info(f"Downloading {datum.filename}")
-            outpath = outdir / Path(datum.filename)
             if self.execute:
-                self.download_file(datum, outdir)
+                self._download_file(outdir, datum)
+        # write the page data after
+        page_data_path = outdir / Path("content")
+        with open(page_data_path, "w", encoding="utf-8") as f:
+            f.write(post.page_data)
+
+    def _download_file(self, outdir, datum: DownloadMetadatum):
+        """
+        Downloads the desired data to disk
+        """
+        resp = requests.get(datum.path)
+        outpath = outdir / Path(datum.filename)
+        with open(outpath, "wb") as f:
+            f.write(resp.content)
+        print(f"Written to {outpath}, {outdir}, {datum.filename}")
 
     def download_creator(self, creator_url):
         """
@@ -55,19 +68,14 @@ class Downloader:
             # Check if the first post is already downloaded (page fully downloaded)
             posts = list(page.child_posts)
             if posts[0].key in self.blacklist:
+                logger.info(f"Skippin page {page.parsed_url}")
                 continue
             logger.info(f"Processing page {page.parsed_url}")
             for post in posts[::-1]:
                 if post.key in self.blacklist:
                     continue
-                self.download_post(post)
+                self._download_post(post)
 
-    def download_file(self, outdir, datum: DownloadMetadatum):
-        """
-        Downloads the desired data to disk
-        """
-        resp = requests.get(datum.path)
-        outpath = outdir / Path(datum.filename)
-        with open(outpath, "wb") as f:
-            f.write(resp.content)
-        print(f"Written to {outpath}, {outdir}, {datum.filename}")
+    def download_post(self, post_url):
+        post = PartyPostPage.from_url(post_url)
+        self._download_post(post)
