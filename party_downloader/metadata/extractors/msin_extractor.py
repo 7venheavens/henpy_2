@@ -33,7 +33,6 @@ class MSINExtractor(BaseMetadataExtractor):
     @property
     def studio(self) -> str:
         group = self.soup.find(class_="group_head")
-        print("GROUP: ", group)
         return group.text.strip() if group else ""
 
     @property
@@ -55,7 +54,6 @@ class MSINExtractor(BaseMetadataExtractor):
             res.append(performer_name)
         return res
 
-
     @property
     def tags(self) -> list[tuple[str, str]]:
         """Returns a list of tuples of (tag_id, tag_name)
@@ -73,12 +71,18 @@ class MSINExtractor(BaseMetadataExtractor):
 
     @property
     def duration(self) -> int | None:
-        raw_duration = (
-            self.soup.find(class_="mv_duration").text.strip()
-        )
+        raw_duration = self.soup.find(class_="mv_duration").text.strip()
         if not raw_duration:
             return None
-        hours, minutes, seconds = raw_duration.split(":")
+        try:
+            hours, minutes, seconds = raw_duration.split(":")
+        except ValueError:
+            pass
+        try:
+            hours, minutes = raw_duration.split(":")
+            seconds = 0
+        except ValueError:
+            pass
         return int(hours) * 3600 + int(minutes) * 60 + int(seconds)
 
     @property
@@ -93,5 +97,7 @@ class MSINExtractor(BaseMetadataExtractor):
 
     @property
     def thumbnail_urls(self) -> list[str]:
-        links = self.soup.find(class_="mv_com1").find_all("div", class_= lambda x: x != "text" and x != "mv_coverUrl")
+        links = self.soup.find(class_="mv_com1").find_all(
+            "div", class_=lambda x: x != "text" and x != "mv_coverUrl"
+        )
         return [link.text.strip() for link in links]
