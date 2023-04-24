@@ -11,6 +11,7 @@ class WebData:
     def __init__(self, url, page_data=None):
         self._page_data = None
         self._soup = None
+        self.url = url
         self.parsed_url = urlparse(url)
         if page_data:
             self._page_data = page_data
