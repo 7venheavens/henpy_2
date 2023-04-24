@@ -35,14 +35,32 @@ class Dumper:
                 f.write(requests.get(thumb_url).content)
 
     @classmethod
+    def _dump_run_data(cls, extractor: BaseMetadataExtractor, outdir):
+        html_name = f"{outdir.stem}.html"
+        with open(outdir / html_name, "w", encoding="utf-8") as f:
+            f.write(extractor.webdata.page_data)
+        run_data = {
+            "dump_name": html_name,
+            "url": extractor.webdata.url,
+        }
+        with open(outdir / "run.json", "w", encoding="utf-8") as f:
+            json.dump(run_data, f)
+
+    @staticmethod
+    def _prepare_outdir(outdir: Path):
+        outdir.mkdir(exist_ok=True)
+        (outdir / "thumbs").mkdir(exist_ok=True)
+
+    @classmethod
     def process(
         cls,
         file_path: str | Path,
         extractor,
-        outdir: str | Path | None = None,
+        outdir: str | Path,
         part: int | None = None,
         dump_thumbnails: bool = True,
         rename_files: bool = True,
+        execute=True,
     ):
         """Processes a file, dumping it into an output directory
 
@@ -51,18 +69,23 @@ class Dumper:
             outdir (str|Path, optional): The output directory. Defaults to None.
         """
         file_path: Path = Path(file_path)
-        if not outdir:
-            outdir = file_path.parent
-        else:
-            outdir = Path(outdir)
-            outdir.makedirs(exist_ok=True)
+
+        outdir = Path(outdir)
+        cls._prepare_outdir(outdir)
 
         cls._dump_media(extractor, outdir, dump_thumbnails=dump_thumbnails)
-        with open(f"{extractor.id}.nfo", "w") as f:
+        with open(f"{extractor.id}.nfo", "w", encoding="utf-8") as f:
             f.write(extractor.metadata_nfo)
 
-        new_name = cls.OUTPUT_FORMAT.format(**extractor.__dict__)
+        cls._dump_run_data(extractor, outdir)
+
+        new_name = cls.OUTPUT_FORMAT.format(**extractor.metadata)
         if part:
             new_name += f" - pt{part}"
-        if rename_files:
-            shutil.move(file_path, outdir / new_name)
+        new_name = new_name + file_path.suffix
+
+        print("NEW NAME", new_name)
+
+        if not execute:
+            return
+        shutil.move(file_path, outdir / new_name)
