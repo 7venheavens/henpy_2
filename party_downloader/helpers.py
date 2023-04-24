@@ -1,4 +1,5 @@
 import os
+import re
 
 
 ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -401,3 +402,7 @@ VIDEO_EXTENSIONS = {
 
 def is_video(path):
     return os.path.splitext(path)[1].lower() in VIDEO_EXTENSIONS
+
+
+class Regexes:
+    FC2 = re.compile(r"(?:fc2-ppv-|fc2 ppv\s+|fc2_PPV_)(\d+)(?:\_(\d+))?", re.IGNORECASE)
