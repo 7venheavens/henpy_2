@@ -11,7 +11,8 @@ import requests
 
 
 class Dumper:
-    OUTPUT_FORMAT: str = "{id} - [{studio}] - {title}"
+    FOLDER_OUTPUT_FORMAT: str = "{id} - [{studio}] - {title}"
+    FILE_OUTPUT_FORMAT: str = "{id}"
 
     # Application of the extractor
     @classmethod
@@ -70,22 +71,26 @@ class Dumper:
         """
         file_path: Path = Path(file_path)
 
-        outdir = Path(outdir)
+        # Maybe generate the outdir from the name
+        name = cls.FOLDER_OUTPUT_FORMAT.format(**extractor.metadata)
+        outdir = Path(outdir) / name
+
         cls._prepare_outdir(outdir)
 
         cls._dump_media(extractor, outdir, dump_thumbnails=dump_thumbnails)
-        with open(f"{extractor.id}.nfo", "w", encoding="utf-8") as f:
-            f.write(extractor.metadata_nfo)
 
         cls._dump_run_data(extractor, outdir)
 
-        new_name = cls.OUTPUT_FORMAT.format(**extractor.metadata)
+        base_name = cls.FILE_OUTPUT_FORMAT.format(**extractor.metadata)
+        with open(outdir / f"{base_name}.nfo", "w", encoding="utf-8") as f:
+            f.write(extractor.metadata_nfo)
         if part:
-            new_name += f" - pt{part}"
-        new_name = new_name + file_path.suffix
+            new_file_name = f"{base_name} - pt{part}{file_path.suffix}"
+        else:
+            new_file_name = f"{base_name}{file_path.suffix}"
 
-        print("NEW NAME", new_name)
+        print("NEW NAME", new_file_name)
 
         if not execute:
             return
-        shutil.move(file_path, outdir / new_name)
+        shutil.move(file_path, outdir / new_file_name)
