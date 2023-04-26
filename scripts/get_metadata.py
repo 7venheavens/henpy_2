@@ -27,6 +27,17 @@ extractors = {
 }
 
 
+def reprocess(target_dir, target_type, download_thumbnails):
+    """Uses the existing run.json file to reprocess the files in the target directory
+
+    Args:
+        target_dir (_type_): _description_
+        target_type (_type_): _description_
+        download_thumbnails (_type_): _description_
+    """
+    pass
+
+
 def main(target_dir, target_type, download_thumbnails, sleep):
     scraper = scrapers.get(target_type)
     if not scraper:
@@ -38,24 +49,23 @@ def main(target_dir, target_type, download_thumbnails, sleep):
 
     for name, file_data in holder.items():
         print(f"Processing video: {name}")
-        outdir = target_dir / name
         # Check if existing data exists, and use the previous load
-        if (outdir / "run.json").exists():
-            with open(outdir / "run.json", "r") as f:
-                run_data = json.load(f)
-            webdata = WebData.from_dump(outdir / run_data["dump_name"], run_data["url"])
-        else:
-            try:
-                webdata = scraper.process(file_data[0][0])
-            except ValueError as e:
-                print(f"Could not process video: {name}, {e}")
-                continue
+        # if (outdir / "run.json").exists():
+        #     with open(outdir / "run.json", "r") as f:
+        #         run_data = json.load(f)
+        #     webdata = WebData.from_dump(outdir / run_data["dump_name"], run_data["url"])
+        # else:
+        try:
+            webdata = scraper.process(file_data[0][0])
+        except ValueError as e:
+            print(f"Could not process video: {name}, {e}")
+            continue
         extractor = extractors[args.target_type](webdata)
         for path, part in file_data:
             print(f"Processing file: {path}, part: {part}")
             Dumper.process(
                 file_path=path,
-                outdir=outdir,
+                outdir=target_dir,
                 extractor=extractor,
                 part=part,
                 dump_thumbnails=download_thumbnails,
