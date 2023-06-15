@@ -28,7 +28,7 @@ class BaseMetadataScraper(ABC):
     def get_id_components(cls, file: str | Path) -> tuple[str, str] | None:
         """Gets the video id components from a given filename"""
         file = Path(file)
-        groups = cls.COMPONENT_REGEX.match(file.stem).groups()
+        groups = cls.COMPONENT_REGEX.search(file.stem).groups()
         if len(groups) == 1:
             groups += (None,)
 
