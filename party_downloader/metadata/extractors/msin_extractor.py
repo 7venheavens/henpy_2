@@ -20,11 +20,17 @@ class MSINExtractor(BaseMetadataExtractor):
 
     @cached_property
     def title(self) -> str:
-        return self.soup.find(class_="mv_title").text.strip()
+        res = self.get_element_text(self.soup.find(class_="mv_title"))
+        if res:
+            res = res.replace("\n", "")
+        return res
 
     @property
     def producer(self) -> str:
-        return self.soup.find(class_="mv_writer").text.strip()
+        res = self.soup.find(class_="mv_writer")
+        if not res:
+            return ""
+        return res.text.strip()
 
     @property
     def publisher(self) -> str:
@@ -59,19 +65,27 @@ class MSINExtractor(BaseMetadataExtractor):
         """Returns a list of tuples of (tag_id, tag_name)
         Tag name can vary across time as this often gets updated
         """
-        tags = self.soup.find(class_="mv_tag").find_all("label")
+        tags = self.soup.find(class_="mv_tag")
+        tags = [] if not tags else tags.find_all("label")
         return [(tag.text.strip(), tag.text.strip()) for tag in tags]
 
     @property
     def release_date(self) -> date | None:
-        raw_date = self.soup.find(class_="mv_createDate").text.strip()
+        raw_date = self.soup.find(class_="mv_createDate")
         if not raw_date:
             return None
+        raw_date = raw_date.text.strip()
+        if not raw_date:
+            return None
+
         return date.fromisoformat(raw_date)
 
     @property
     def duration(self) -> int | None:
-        raw_duration = self.soup.find(class_="mv_duration").text.strip()
+        raw_duration = self.soup.find(class_="mv_duration")
+        if not raw_duration:
+            return None
+        raw_duration = raw_duration.text.strip()
         if not raw_duration:
             return None
         try:
@@ -89,6 +103,8 @@ class MSINExtractor(BaseMetadataExtractor):
     def cover_url(self) -> str:
         movie_box = self.soup.find(class_="movie_top")
         cover = movie_box.find("img")
+        if not cover:
+            return ""
         href = cover["src"]
         if not href:
             return ""
@@ -97,7 +113,10 @@ class MSINExtractor(BaseMetadataExtractor):
 
     @property
     def thumbnail_urls(self) -> list[str]:
-        links = self.soup.find(class_="mv_com1").find_all(
+        links = self.soup.find(class_="mv_com1")
+        if not links:
+            return []
+        links = links.find_all(
             "div", class_=lambda x: x != "text" and x != "mv_coverUrl"
         )
         return [link.text.strip() for link in links]

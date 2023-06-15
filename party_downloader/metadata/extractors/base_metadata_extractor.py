@@ -38,6 +38,13 @@ class BaseMetadataExtractor(ABC):
     #     """Checks if the metadata page is valid and does not point to a "did not find" type age"""
     #     pass
 
+    @staticmethod
+    def get_element_text(element):
+        if not element:
+            return None
+        res = element.text.strip()
+        return res if res else None
+
     @property
     def id(self) -> str:
         return ""
@@ -141,9 +148,10 @@ class BaseMetadataExtractor(ABC):
         id = ET.SubElement(root, "id")
         id.text = self.id
         year = ET.SubElement(root, "year")
-        year.text = str(self.release_date.year)
         premiered = ET.SubElement(root, "premiered")
-        premiered.text = self.release_date.isoformat()
+        if self.release_date:
+            year.text = str(self.release_date.year)
+            premiered.text = self.release_date.isoformat()
 
         dom = minidom.parseString(ET.tostring(root))
         return dom.toprettyxml(indent="  ")
