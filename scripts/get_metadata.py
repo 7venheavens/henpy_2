@@ -38,7 +38,7 @@ def reprocess(target_dir, target_type, download_thumbnails):
     pass
 
 
-def main(target_dir, target_type, download_thumbnails, sleep):
+def main(target_dir, target_type, download_thumbnails, sleep, dry_run=False):
     scraper = scrapers.get(target_type)
     if not scraper:
         raise ValueError("Provide a valid target type")
@@ -63,6 +63,8 @@ def main(target_dir, target_type, download_thumbnails, sleep):
         extractor = extractors[args.target_type](webdata)
         for path, part in file_data:
             print(f"Processing file: {path}, part: {part}")
+            if dry_run:
+                continue
             Dumper.process(
                 file_path=path,
                 outdir=target_dir,
@@ -88,5 +90,16 @@ if __name__ == "__main__":
     parser.add_argument(
         "--sleep", help="Sleep time between requests", type=int, default=2
     )
+    parser.add_argument(
+        "--dry_run",
+        action="store_true",
+        help="Dry run, don't actually download anything",
+    )
     args = parser.parse_args()
-    main(args.target_dir, args.target_type, args.download_thumbnails, args.sleep)
+    main(
+        args.target_dir,
+        args.target_type,
+        args.download_thumbnails,
+        args.sleep,
+        dry_run=args.dry_run,
+    )
