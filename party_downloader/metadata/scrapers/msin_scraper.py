@@ -5,6 +5,7 @@ from party_downloader.models.web_data import WebData
 from pathlib import Path
 from party_downloader.helpers import Regexes
 import requests
+import re
 
 
 class MSINScraper(BaseMetadataScraper):
@@ -24,9 +25,8 @@ class MSINScraper(BaseMetadataScraper):
 
     @staticmethod
     def is_multiple(webdata: WebData):
-        if webdata.soup.find(class_="movie_view"):
-            return True
-        return False
+        res = re.findall(f"\w+\s+の検索結果\s+\d+件", webdata.page_data)
+        return bool(res)
 
     @staticmethod
     def is_valid(webdata: WebData):
@@ -36,6 +36,10 @@ class MSINScraper(BaseMetadataScraper):
 
         if MSINScraper.is_multiple(webdata):
             raise ValueError("Multiple results found")
+        # check for 404
+        if webdata.soup.find(class_="error_number", text="404"):
+            raise ValueError("404 Not found")
+
         MSINScraper.is_age_verified(webdata)
 
     @staticmethod
