@@ -29,6 +29,9 @@ class Dumper:
                 f.write(requests.get(cover_url).content)
 
         # Dump the thumbnails
+        if not dump_thumbnails:
+            return
+        print("Dumping thumbnails")
         thumb_dir = outdir / "thumbs"
         for i, thumb_url in enumerate(extractor.thumbnail_urls):
             thumb_path = thumb_dir / f"{i}.jpg"
@@ -72,8 +75,9 @@ class Dumper:
         file_path: Path = Path(file_path)
 
         # Maybe generate the outdir from the name
-        name = cls.FOLDER_OUTPUT_FORMAT.format(**extractor.metadata)
-        outdir = Path(outdir) / name
+        # name = cls.FOLDER_OUTPUT_FORMAT.format(**extractor.metadata)
+        # Can be long, need some checks for this
+        outdir = Path(outdir) / extractor.id
 
         cls._prepare_outdir(outdir)
 
