@@ -406,6 +406,6 @@ def is_video(path):
 
 class Regexes:
     FC2 = re.compile(
-        r"(?:fc2-ppv|fc2 ppv|fc2_PPV|FC2PPV)[-_\s]?(\d+)(?:\_(\d+)|\s+-\s+pt(\d+))??",
+        r"(?:fc2-ppv|fc2 ppv|fc2_PPV|FC2PPV)[-_\s]?(\d+)(?:[_\s](\d+)|\s+-\s+pt(\d+))?",
         re.IGNORECASE,
     )
