@@ -13,6 +13,22 @@ class BaseMetadataExtractor(ABC):
     Extractors are used to extract metadata from an acquired metadata page
     """
 
+    fields = [
+        "id",
+        "title",
+        "description",
+        "producer",
+        "publisher",
+        "studio",
+        "series",
+        "actors",
+        "tags",
+        "release_date",
+        "duration",
+        "cover_url",
+        "thumbnail_urls",
+    ]
+
     def __init__(self, webdata: WebData):
         self.webdata = webdata
         # self.check_valid()
