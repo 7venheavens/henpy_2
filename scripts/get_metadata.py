@@ -3,27 +3,31 @@ from party_downloader.metadata.dumpers.dumper import Dumper
 from party_downloader.metadata.extractors import (
     FC2Extractor,
     MSINExtractor,
+    JavLibraryExtractor,
 )
 from party_downloader.metadata.scrapers import (
     FC2Scraper,
     MSINScraper,
     BaseMetadataScraper,
+    JAVLibraryScraper,
 )
 from pathlib import Path
 import json
 from party_downloader.models.web_data import WebData
 
-choices = ["fc2", "msin"]
+choices = ["fc2", "msin", "javlibrary"]
 
 
 scrapers: dict[str, BaseMetadataScraper] = {
     "fc2": FC2Scraper(),
     "msin": MSINScraper(),
+    "javlibrary": JAVLibraryScraper(),
 }
 
 extractors = {
     "fc2": FC2Extractor,
     "msin": MSINExtractor,
+    "javlibrary": JavLibraryExtractor,
 }
 
 

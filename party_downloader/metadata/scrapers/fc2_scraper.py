@@ -24,6 +24,6 @@ class FC2Scraper(BaseMetadataScraper):
             raise ValueError("Invalid data")
 
     def search(self, query: str) -> WebData:
-        res = WebData(self.GET_TEMPLATE.format(id_num=query))
+        res = WebData(self.SEARCH_TEMPLATE_TEMPLATE.format(id_num=query))
         self.is_valid(res)
         return res

@@ -43,6 +43,7 @@ class BaseMetadataScraper(ABC):
         components = cls.get_id_components(file)
         return components["id"]
 
+    @staticmethod
     def is_multiple(webdata: WebData):
         """Checks if the metadata page matches to mult
         iple videos"""
