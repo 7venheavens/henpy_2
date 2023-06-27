@@ -409,3 +409,4 @@ class Regexes:
         r"(?:fc2-ppv|fc2 ppv|fc2_PPV|FC2PPV)[-_\s]?(\d+)(?:[_\s](\d+)|\s+-\s+pt(\d+))?",
         re.IGNORECASE,
     )
+    JAV = re.compile(r"(\w+)-(\d+)", re.IGNORECASE)
