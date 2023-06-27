@@ -4,6 +4,7 @@ import argparse
 from party_downloader.metadata.extractors import BaseMetadataExtractor
 import os
 import shutil
+import re
 
 
 class CustomMetadataExtractor(BaseMetadataExtractor):
@@ -28,18 +29,25 @@ if __name__ == "__main__":
     parser.add_argument("--publisher", default="self-published")
 
     parser.add_argument(
-        "target_files",
+        "--target_files",
         help="Files to process",
         nargs="+",
     )
 
     parser.add_argument(
         "--execute",
-        "Executes, mutating data on disk, if not proided, dryruns",
-        action="store_True",
+        help="Executes, mutating data on disk, if not proided, dryruns",
+        action="store_true",
+    )
+    parser.add_argument("-r", "--recursive")
+    parser.add_argument(
+        "--id_regex", help="Regex to extract id from filename", default=r"\w+"
+    )
+    parser.add_argument(
+        "--title-regex", help="Regex to extract title from filename", default=None
     )
 
-    parser.add_argument("-r", "--recursive")
+    parser.add_argument("--nameflags", default="")
 
     args = parser.parse_args()
 
@@ -50,29 +58,50 @@ if __name__ == "__main__":
         else:
             args.outdir = os.getcwd()
 
-    targets = args.target_files
-    if args.recursive:
-        for root, dirs, files in os.walk(args.target_dir):
-            for file in files:
-                targets.append(os.path.join(root, file))
+    if not args.title_regex:
+        args.title_regex = args.id_regex
+
+    targets = args.target_files or []
+    for root, dirs, files in os.walk(args.target_dir):
+        for file in files:
+            targets.append(os.path.join(root, file))
+        if not args.recursive:
+            break
+
+    print(f"processing: {targets}")
 
     for target in targets:
-        if not os.isfile(target):
+        if not os.path.isfile(target):
             continue
 
         print(f"Processing: {target}")
-        outdir = os.path.join(
-            args.outdir, os.path.splitext(os.path.basename(target))[0]
-        )
-        os.makedirs(
-            outdir,
-            exist_ok=True,
-        )
+
+        id = re.search(args.id_regex, os.path.basename(target)).group(1)
+        title = re.search(args.title_regex, os.path.basename(target)).group(1)
+        if "replace_underscores" in args.nameflags:
+            title = title.replace("_", " ")
+
+        if args.publisher:
+            outname = f"{args.publisher} - {id}"
+        else:
+            outname = id
 
         extractor = CustomMetadataExtractor(
+            id=id,
+            title=title,
             actors=args.actors,
             publisher=args.publisher,
         )
 
-        if args.execute():
-            shutil.move(target, outdir)
+        outdir = os.path.join(args.outdir, outname)
+        os.makedirs(
+            outdir,
+            exist_ok=True,
+        )
+        outpath = os.path.join(outdir, f"{outname}{os.path.splitext(target)[1]}")
+        print(f"File: {target} -> {outpath}")
+        print(f"Extracted metadata: {extractor.__dict__}")
+        with open(os.path.splitext(outpath)[0] + ".nfo", "w") as f:
+            f.write(extractor.metadata_nfo)
+        if args.execute:
+            shutil.move(target, outpath)
