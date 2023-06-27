@@ -11,7 +11,8 @@ import requests
 
 
 class Dumper:
-    FOLDER_OUTPUT_FORMAT: str = "{id} - [{studio}] - {title}"
+    FOLDER_OUTPUT_FORMAT: str = "{id} [{studio}] - {title}"
+    FOLDER_OUTPUT_FORMAT_SHORT: str = "{id} [{studio}]"
     FILE_OUTPUT_FORMAT: str = "{id}"
 
     # Application of the extractor
@@ -75,11 +76,19 @@ class Dumper:
         file_path: Path = Path(file_path)
 
         # Maybe generate the outdir from the name
-        # name = cls.FOLDER_OUTPUT_FORMAT.format(**extractor.metadata)
+        data = extractor.metadata
+        data["title"] = data["title"].replace(f" {extractor.id}", "")
+        name = cls.FOLDER_OUTPUT_FORMAT.format(**data)
+        # name = cls.FOLDER_OUTPUT_FORMAT_SHORT.format(**extractor.metadata)
+        name = name.replace("\\", "")
+        name = name.replace("/", "")
         # Can be long, need some checks for this
-        outdir = Path(outdir) / extractor.id
-
-        cls._prepare_outdir(outdir)
+        outdir = Path(outdir) / name
+        try:
+            cls._prepare_outdir(outdir)
+        except:
+            print(f"Could not prepare outdir: {outdir}")
+            return
 
         cls._dump_media(extractor, outdir, dump_thumbnails=dump_thumbnails)
 
