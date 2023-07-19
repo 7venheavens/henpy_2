@@ -13,14 +13,16 @@ class JAVLibraryScraper(BaseMetadataScraper):
     def get_id_components(cls, file: str | Path) -> tuple[str, str] | None:
         file = Path(file)
         groups = cls.COMPONENT_REGEX.findall(file.stem)
+        print(groups)
         if len(groups) != 1:
             raise Exception(f"Unable to extract ids: {file.stem}")
 
         id = f"{groups[0][0].upper()}-{groups[0][1]}"
+        part = None
+        if len(groups[0]) >= 3 and groups[0][2]:
+            part = int(groups[0][2])
 
-        res = {"id": id, "part": None, "name": id}
-        if res["part"]:
-            res["part"] = int(res["part"])
+        res = {"id": id, "part": part, "name": id}
         return res
 
     @staticmethod
