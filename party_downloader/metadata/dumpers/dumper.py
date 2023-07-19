@@ -6,13 +6,15 @@ import os
 from party_downloader.models.web_data import WebData
 import shutil
 import json
+import re
 
 import requests
 
 
 class Dumper:
     FOLDER_OUTPUT_FORMAT: str = "{id} [{studio}] - {title}"
-    FOLDER_OUTPUT_FORMAT_SHORT: str = "{id} [{studio}]"
+    FOLDER_OUTPUT_FORMAT_SHORT: str = "{id} - {title}"
+    FOLDER_OUTPUT_FORMAT_SHORTEST: str = "{id}"
     FILE_OUTPUT_FORMAT: str = "{id}"
 
     # Application of the extractor
@@ -57,6 +59,22 @@ class Dumper:
         with open(outdir / "run.json", "w", encoding="utf-8") as f:
             json.dump(run_data, f)
 
+    @classmethod
+    def _prepare_name(cls, metadata):
+        """Returns the output name for the metadata"""
+        # Figure out which template to use intelligently, using the length of the title
+        # This is because ZFS and some other file systems have a limit on the length of the file name (255 bytes)
+        name = cls.FOLDER_OUTPUT_FORMAT.format(**metadata)
+        # Can be long, need some checks for this
+        if len(name.encode("utf-8")) > 250:
+            name = cls.FOLDER_OUTPUT_FORMAT_SHORT.format(**metadata)
+        if len(name.encode("utf-8")) > 250:
+            name = cls.FOLDER_OUTPUT_FORMAT_SHORTEST.format(**metadata)
+        # Clean out illegal characters
+        name = re.sub(r"[<>:\"/\\|?*]", "", name)
+        name = name.replace("\u3000", " ")
+        return name
+
     @staticmethod
     def _prepare_outdir(outdir: Path):
         outdir.mkdir(exist_ok=True)
@@ -72,28 +90,22 @@ class Dumper:
         dump_thumbnails: bool = True,
         rename_files: bool = True,
         execute=True,
-    ):
-        """Processes a file, dumping it into an output directory
+    ) -> Path | None:
+        """Processes a file, dumping it into an output directory. Returns the output directory
 
         Args:
             file_path (str|Path): The path to the file
             outdir (str|Path, optional): The output directory. Defaults to None.
         """
-        file_path: Path = Path(file_path)
-
         # Maybe generate the outdir from the name
         data = extractor.metadata
         data["title"] = data["title"].replace(f" {extractor.id}", "")
-        name = cls.FOLDER_OUTPUT_FORMAT.format(**data)
-        # name = cls.FOLDER_OUTPUT_FORMAT_SHORT.format(**extractor.metadata)
-        name = name.replace("\\", "")
-        name = name.replace("/", "")
-        # Can be long, need some checks for this
+        name = cls._prepare_name(data)
         outdir = Path(outdir) / name
         try:
             cls._prepare_outdir(outdir)
-        except:
-            print(f"Could not prepare outdir: {outdir}")
+        except Exception as e:
+            print(f"Could not prepare outdir: {outdir}. Exception: {e}")
             return
 
         cls._dump_media(extractor, outdir, dump_thumbnails=dump_thumbnails)
@@ -111,5 +123,8 @@ class Dumper:
         print("NEW NAME", new_file_name)
 
         if not execute:
-            return
+            return outdir
+        if (outdir / new_file_name).exists():
+            raise Exception(f"File {new_file_name} already exists, skipping")
         shutil.move(file_path, outdir / new_file_name)
+        return outdir
