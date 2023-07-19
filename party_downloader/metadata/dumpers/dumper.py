@@ -29,6 +29,12 @@ class Dumper:
             with open(cover_path, "wb") as f:
                 f.write(requests.get(cover_url).content)
 
+        background_url = extractor.background_url
+        if background_url:
+            background_path = outdir / "fanart.jpg"
+            with open(background_path, "wb") as f:
+                f.write(requests.get(background_url).content)
+
         # Dump the thumbnails
         if not dump_thumbnails:
             return

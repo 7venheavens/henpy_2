@@ -98,26 +98,35 @@ class BaseMetadataExtractor(ABC):
         return ""
 
     @property
+    def background_url(self) -> str:
+        return ""
+
+    @property
     def thumbnail_urls(self) -> list[str]:
         return []
 
     @cached_property
     def metadata(self) -> dict:
-        return {
-            "id": self.id,
-            "title": self.title,
-            "description": self.description,
-            "producer": self.producer,
-            "publisher": self.publisher,
-            "studio": self.studio,
-            "series": self.series,
-            "actors": self.actors,
-            "tags": self.tags,
-            "release_date": self.release_date,
-            "duration": self.duration,
-            "cover_url": self.cover_url,
-            "thumbnail_urls": self.thumbnail_urls,
-        }
+        try:
+            return {
+                "id": self.id,
+                "title": self.title,
+                "description": self.description,
+                "producer": self.producer,
+                "publisher": self.publisher,
+                "studio": self.studio,
+                "series": self.series,
+                "actors": self.actors,
+                "tags": self.tags,
+                "release_date": self.release_date,
+                "duration": self.duration,
+                "cover_url": self.cover_url,
+                "background_url": self.background_url,
+                "thumbnail_urls": self.thumbnail_urls,
+            }
+        except:
+            print(f"Failed for webdata for {self.webdata.url}")
+            raise
 
     @cached_property
     def metadata_nfo(self) -> str:

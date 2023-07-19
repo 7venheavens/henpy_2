@@ -1,5 +1,8 @@
+from __future__ import annotations
 import os
+from pathlib import Path
 import re
+from PIL import Image
 
 
 ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -410,3 +413,23 @@ class Regexes:
         re.IGNORECASE,
     )
     JAV = re.compile(r"(\w+)-(\d+)(?:[-_\s](\d+)|\s+-\s+pt(\d+))?", re.IGNORECASE)
+
+
+def make_folder_from_fanart(img: Image.Image | str | Path, outpath: str | Path):
+    """Processes a full sized fanart image into a single plex folder image
+
+    Args:
+        img_path (_type_): _description_
+    """
+    if not isinstance(img, Image.Image):
+        img = Image.open(img)
+
+    # Crop the image to include the right 378 pixels
+    width, height = img.size
+
+    img = img.crop([width - 378, 0, width, height])
+
+    with open(outpath, "wb") as f:
+        img.save(f, "JPEG")
+
+    img.close()

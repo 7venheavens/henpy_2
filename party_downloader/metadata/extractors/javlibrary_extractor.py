@@ -92,7 +92,7 @@ class JavLibraryExtractor(BaseMetadataExtractor):
         return int(re.sub("[^0-9]", "", raw_duration))
 
     @property
-    def cover_url(self) -> str:
+    def background_url(self) -> str:
         href = self.webdata.soup.find(id="video_jacket_img")["src"]
 
         if not href:
