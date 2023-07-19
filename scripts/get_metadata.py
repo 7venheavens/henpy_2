@@ -14,6 +14,7 @@ from party_downloader.metadata.scrapers import (
 from pathlib import Path
 import json
 from party_downloader.models.web_data import WebData
+from party_downloader.helpers import make_folder_from_fanart
 
 choices = ["fc2", "msin", "javlibrary"]
 
@@ -69,13 +70,19 @@ def main(target_dir, target_type, download_thumbnails, sleep, dry_run=False):
             print(f"Processing file: {path}, part: {part}")
             if dry_run:
                 continue
-            Dumper.process(
+            dump_dir = Dumper.process(
                 file_path=path,
                 outdir=target_dir,
                 extractor=extractor,
                 part=part,
                 dump_thumbnails=download_thumbnails,
             )
+
+            if target_type == "javlibrary":
+                if not dry_run and dump_dir and (dump_dir / "fanart.jpg").exists():
+                    make_folder_from_fanart(
+                        (dump_dir / "fanart.jpg"), (dump_dir / "folder.jpg")
+                    )
 
 
 if __name__ == "__main__":
