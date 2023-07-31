@@ -4,31 +4,43 @@ from party_downloader.metadata.extractors import (
     FC2Extractor,
     MSINExtractor,
     JavLibraryExtractor,
+    JavBusExtractor,
 )
 from party_downloader.metadata.scrapers import (
     FC2Scraper,
     MSINScraper,
     BaseMetadataScraper,
     JAVLibraryScraper,
+    JavBusScraper,
 )
 from pathlib import Path
 import json
 from party_downloader.models.web_data import WebData
-from party_downloader.helpers import make_folder_from_fanart
+from party_downloader.helpers import make_folder_from_fanart, Regexes
+import logging
 
-choices = ["fc2", "msin", "javlibrary"]
+
+choices = ["fc2", "msin", "javlibrary", "javbus"]
 
 
 scrapers: dict[str, BaseMetadataScraper] = {
     "fc2": FC2Scraper(),
     "msin": MSINScraper(),
     "javlibrary": JAVLibraryScraper(),
+    "javbus": JavBusScraper(),
 }
 
 extractors = {
     "fc2": FC2Extractor,
     "msin": MSINExtractor,
     "javlibrary": JavLibraryExtractor,
+    "javbus": JavBusExtractor,
+}
+
+regexes = {
+    "fc2": Regexes.FC2,
+    "jav": Regexes.JAV,
+    "jav_prefix": Regexes.JAV_PREFIX,
 }
 
 
@@ -43,10 +55,20 @@ def reprocess(target_dir, target_type, download_thumbnails):
     pass
 
 
-def main(target_dir, target_type, download_thumbnails, sleep, dry_run=False):
+def main(
+    target_dir,
+    target_type,
+    download_thumbnails,
+    sleep,
+    dry_run=False,
+    override_regex=None,
+):
     scraper = scrapers.get(target_type)
     if not scraper:
         raise ValueError("Provide a valid target type")
+
+    if override_regex:
+        scraper.COMPONENT_REGEX = override_regex
 
     target_dir = Path(target_dir)
 
@@ -106,11 +128,22 @@ if __name__ == "__main__":
         action="store_true",
         help="Dry run, don't actually download anything",
     )
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument(
+        "--override-regex",
+        help="Override the regex used to match",
+        choices=regexes.keys(),
+        default=None,
+    )
     args = parser.parse_args()
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+
     main(
         args.target_dir,
         args.target_type,
         args.download_thumbnails,
         args.sleep,
         dry_run=args.dry_run,
+        override_regex=regexes.get(args.override_regex),
     )

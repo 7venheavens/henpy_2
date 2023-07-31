@@ -413,6 +413,9 @@ class Regexes:
         re.IGNORECASE,
     )
     JAV = re.compile(r"(\w+)-(\d+)(?:[-_\s](\d+)|\s+-\s+pt(\d+))?", re.IGNORECASE)
+    JAV_PREFIX = re.compile(
+        r"\d{3}(\w+)-(\d+)(?:[-_\s](\d+)|\s+-\s+pt(\d+))?", re.IGNORECASE
+    )
 
 
 def make_folder_from_fanart(img: Image.Image | str | Path, outpath: str | Path):
