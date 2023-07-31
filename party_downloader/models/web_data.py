@@ -1,6 +1,9 @@
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 import requests
+from logging import getLogger
+
+logger = getLogger("models.web_data")
 
 
 class WebData:
@@ -30,6 +33,7 @@ class WebData:
     def page_data(self):
         # lazily gets the page data when required
         if not self._page_data:
+            logger.debug(f"Getting page data for {self.parsed_url.geturl()}")
             resp = requests.get(self.parsed_url.geturl())
             self._page_data = resp.text
 
