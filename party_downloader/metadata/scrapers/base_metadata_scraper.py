@@ -24,11 +24,10 @@ class BaseMetadataScraper(ABC):
     def __init__(self):
         self.session = requests.Session()
 
-    @classmethod
-    def get_id_components(cls, file: str | Path) -> tuple[str, str] | None:
+    def get_id_components(self, file: str | Path) -> tuple[str, str] | None:
         """Gets the video id components from a given filename"""
         file = Path(file)
-        groups = cls.COMPONENT_REGEX.search(file.stem).groups()
+        groups = self.COMPONENT_REGEX.search(file.stem).groups()
         if len(groups) == 1:
             groups += (None,)
 
@@ -37,10 +36,9 @@ class BaseMetadataScraper(ABC):
             res["part"] = int(res["part"])
         return res
 
-    @classmethod
-    def get_query_string(cls, file: str | Path) -> str:
+    def get_query_string(self, file: str | Path) -> str:
         """Builds the query string from the filename, raises an error if a filename cannot be found"""
-        components = cls.get_id_components(file)
+        components = self.get_id_components(file)
         return components["id"]
 
     @staticmethod
