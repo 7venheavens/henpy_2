@@ -48,19 +48,22 @@ class JavDBExtractor(BaseMetadataExtractor):
 
     @property
     def publisher(self) -> str:
-        publisher = self.panel_data.get("Maker:")
-        if not publisher:
-            return ""
-        publisher = publisher.text.strip()
-        return publisher
-
-    @property
-    def studio(self) -> str:
         return ""
 
     @property
+    def studio(self) -> str:
+        studio = self.panel_data.get("Maker:")
+        if not studio:
+            return ""
+        studio = studio.text.strip()
+        return studio
+
+    @property
     def series(self) -> str:
-        series = self.panel_data["Series:"].text.strip()
+        series = self.panel_data.get("Series:")
+        if not series:
+            return ""
+        series = series.text.strip()
         return series
 
     @property
