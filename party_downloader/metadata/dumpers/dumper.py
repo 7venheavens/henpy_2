@@ -28,14 +28,16 @@ class Dumper:
         cover_url = extractor.cover_url
         if cover_url:
             cover_path = outdir / "folder.jpg"
-            with open(cover_path, "wb") as f:
-                f.write(requests.get(cover_url).content)
+            if not cover_path.exists():
+                with open(cover_path, "wb") as f:
+                    f.write(requests.get(cover_url).content)
 
         background_url = extractor.background_url
         if background_url:
             background_path = outdir / "fanart.jpg"
-            with open(background_path, "wb") as f:
-                f.write(requests.get(background_url).content)
+            if not background_path.exists():
+                with open(background_path, "wb") as f:
+                    f.write(requests.get(background_url).content)
 
         # Dump the thumbnails
         if not dump_thumbnails:
@@ -44,8 +46,9 @@ class Dumper:
         thumb_dir = outdir / "thumbs"
         for i, thumb_url in enumerate(extractor.thumbnail_urls):
             thumb_path = thumb_dir / f"{i}.jpg"
-            with open(thumb_path, "wb") as f:
-                f.write(requests.get(thumb_url).content)
+            if not thumb_path.exists():
+                with open(thumb_path, "wb") as f:
+                    f.write(requests.get(thumb_url).content)
 
     @classmethod
     def _dump_run_data(cls, extractor: BaseMetadataExtractor, outdir):
