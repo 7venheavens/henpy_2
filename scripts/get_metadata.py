@@ -1,3 +1,4 @@
+from __future__ import annotations
 from party_downloader.metadata.aggregate import aggregate_files
 from party_downloader.metadata.dumpers.dumper import Dumper
 from party_downloader.metadata.extractors import (
@@ -5,6 +6,7 @@ from party_downloader.metadata.extractors import (
     MSINExtractor,
     JavLibraryExtractor,
     JavBusExtractor,
+    JavDBExtractor,
 )
 from party_downloader.metadata.scrapers import (
     FC2Scraper,
@@ -12,6 +14,7 @@ from party_downloader.metadata.scrapers import (
     BaseMetadataScraper,
     JAVLibraryScraper,
     JavBusScraper,
+    JavDBScraper,
 )
 from pathlib import Path
 import json
@@ -20,7 +23,7 @@ from party_downloader.helpers import make_folder_from_fanart, Regexes
 import logging
 
 
-choices = ["fc2", "msin", "javlibrary", "javbus"]
+choices = ["fc2", "msin", "javlibrary", "javbus", "javdb"]
 
 
 scrapers: dict[str, BaseMetadataScraper] = {
@@ -28,6 +31,7 @@ scrapers: dict[str, BaseMetadataScraper] = {
     "msin": MSINScraper(),
     "javlibrary": JAVLibraryScraper(),
     "javbus": JavBusScraper(),
+    "javdb": JavDBScraper(),
 }
 
 extractors = {
@@ -35,24 +39,61 @@ extractors = {
     "msin": MSINExtractor,
     "javlibrary": JavLibraryExtractor,
     "javbus": JavBusExtractor,
+    "javdb": JavDBExtractor,
 }
 
 regexes = {
     "fc2": Regexes.FC2,
     "jav": Regexes.JAV,
     "jav_prefix": Regexes.JAV_PREFIX,
+    "carib": Regexes.CARIB,
 }
 
 
-def reprocess(target_dir, target_type, download_thumbnails):
-    """Uses the existing run.json file to reprocess the files in the target directory
+def reprocess_dir(
+    target_dir: Path | str,
+    extractor,
+    scraper,
+    download_thumbnails=True,
+    dry_run=True,
+    override_regex=None,
+):
+    """Uses the existing run.json file and associated html files to reprocess the files in the target directory
 
     Args:
-        target_dir (_type_): _description_
-        target_type (_type_): _description_
+        target_dir _
+        extractor (_type_): _description_
         download_thumbnails (_type_): _description_
     """
-    pass
+    target_dir = Path(target_dir)
+    if override_regex:
+        scraper.COMPONENT_REGEX = override_regex
+
+    if not (target_dir / "run.json").exists():
+        raise ValueError("No run.json file found in target directory")
+    with open(target_dir / "run.json", "r") as f:
+        run_data = json.load(f)
+    webdata = WebData.from_dump(target_dir / run_data["dump_name"], run_data["url"])
+    extractor = extractor(webdata)
+
+    holder, unprocessed = aggregate_files(target_dir, scraper)
+    assert len(holder) == 1
+
+    for name, file_data in holder.items():
+        print(f"reprocessing video: {name}")
+        for path, part in file_data:
+            dump_dir = Dumper.process(
+                file_path=path,
+                outdir=target_dir,
+                extractor=extractor,
+                part=part,
+                dump_thumbnails=download_thumbnails,
+            )
+            if not dump_dir or not (dump_dir / "fanart.jpg").exists():
+                continue
+            make_folder_from_fanart(
+                (dump_dir / "fanart.jpg"), (dump_dir / "folder.jpg")
+            )
 
 
 def main(
@@ -81,7 +122,6 @@ def main(
         #     with open(outdir / "run.json", "r") as f:
         #         run_data = json.load(f)
         #     webdata = WebData.from_dump(outdir / run_data["dump_name"], run_data["url"])
-        # else:
         try:
             webdata = scraper.process(file_data[0][0])
         except ValueError as e:
@@ -135,15 +175,32 @@ if __name__ == "__main__":
         choices=regexes.keys(),
         default=None,
     )
+    parser.add_argument(
+        "--reprocess",
+        action="store_true",
+        help="Reprocess the target directory, using only existing data",
+        default=False,
+    )
     args = parser.parse_args()
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
 
-    main(
-        args.target_dir,
-        args.target_type,
-        args.download_thumbnails,
-        args.sleep,
-        dry_run=args.dry_run,
-        override_regex=regexes.get(args.override_regex),
-    )
+    if args.reprocess:
+        reprocess_dir(
+            args.target_dir,
+            extractors.get(args.target_type),
+            scrapers.get(args.target_type),
+            args.download_thumbnails,
+            dry_run=args.dry_run,
+            override_regex=regexes.get(args.override_regex),
+        )
+
+    else:
+        main(
+            args.target_dir,
+            args.target_type,
+            args.download_thumbnails,
+            args.sleep,
+            dry_run=args.dry_run,
+            override_regex=regexes.get(args.override_regex),
+        )
