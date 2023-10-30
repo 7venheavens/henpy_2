@@ -26,8 +26,8 @@ correct_metadata = {
         "title": "ありさ\u3000−ヤラレ人形21−",
         "description": "",
         "producer": "",
-        "publisher": "Gachinco",
-        "studio": "",
+        "publisher": "",
+        "studio": "Gachinco",
         "series": "GachiGOD",
         "actors": ["中野ありさ"],
         "tags": [
@@ -48,8 +48,8 @@ correct_metadata = {
         "title": "串刺しPtoMレ×プ 大量中出しされた後のマ●コに入った白濁チ●ポで上下穴封鎖！声も出せずに身悶えしかできない美人キャリアウーマンOL 本庄鈴",
         "description": "",
         "producer": "K*WEST",
-        "publisher": "SOD Create",
-        "studio": "",
+        "publisher": "",
+        "studio": "SOD Create",
         "series": "串刺しPtoMレ×プ",
         "tags": [
             # <span class="value"><a href="/tags?c5=18">Creampie</a>,&nbsp;<a href="/tags?c5=24">3p, 4p</a>,&nbsp;<a href="/tags?c7=28">Solowork</a>,&nbsp;<a href="/tags?c4=65">Slender</a>,&nbsp;<a href="/tags?c5=123">Deep Throating</a>,&nbsp;<a href="/tags?c7=348">Uncensored Crack</a></span>
