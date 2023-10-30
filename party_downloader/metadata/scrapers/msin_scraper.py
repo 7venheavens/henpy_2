@@ -46,3 +46,29 @@ class MSINScraper(BaseMetadataScraper):
         target = webdata.soup.find(class_="error_massage")
         if target and target.text == "年齢確認":
             raise ValueError("Age verification required")
+
+    def search(self, query: str) -> WebData:
+        req = self.session.get(self.SEARCH_TEMPLATE.format(query))
+        res = WebData(req.url, req.text)
+        # check if is valid
+        try:
+            self.is_valid(res)
+        except ValueError:
+            if not self.is_multiple(res):
+                raise
+            # Try to handle multiple matches with an exact match, and a query henceforth
+            tiles = res.soup.find_all(class_="movie_info")
+            for tile in tiles:
+                print(tile.find(class_="movie_fileName").text, query)
+                if tile.find(class_="movie_fileName").text == f"fc2-ppv-{query}":
+                    url = res.clean_url_link(
+                        tile.find(class_="movie_image").find("a")["href"]
+                    )
+                    page_req = self.session.get(url)
+                    res = WebData(
+                        page_req.url,
+                        page_req.text,
+                    )
+                    break
+
+        return res
