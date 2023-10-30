@@ -97,8 +97,9 @@ class JavLibraryExtractor(BaseMetadataExtractor):
 
         if not href:
             return ""
-        # return self.webdata.root_url + href
-        return "https:" + href
+        if not href.startswith("http"):
+            return "https:" + href
+        return href
 
     @property
     def thumbnail_urls(self) -> list[str]:
