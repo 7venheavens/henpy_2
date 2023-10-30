@@ -16,8 +16,7 @@ class MSINScraper(BaseMetadataScraper):
         super().__init__()
         self.session.cookies.set("age", "off")
 
-    @classmethod
-    def get_id_components(cls, file: str | Path) -> tuple[str, str] | None:
+    def get_id_components(self, file: str | Path) -> tuple[str, str] | None:
         res = super().get_id_components(file)
         if res:
             res["name"] = f'fc2-ppv-{res["id"]}'

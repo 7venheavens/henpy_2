@@ -11,7 +11,7 @@ def aggregate_files(target_dir, scraper, recursive=False):
     unprocessed = []
     holder = defaultdict(list)
     for root, dirs, filenames in os.walk(target_dir):
-        print(filenames)
+        print("filenames:", filenames)
         for filename in filenames:
             # First ensure that the file
             if not is_video(filename):
@@ -19,6 +19,7 @@ def aggregate_files(target_dir, scraper, recursive=False):
                 continue
             try:
                 components = scraper.get_id_components(filename)
+                print(scraper, components)
             except (ValueError, AttributeError) as e:
                 print(f"Skipping invalid: {filename}, error: {e}")
                 unprocessed.append(filename)
