@@ -32,9 +32,10 @@ class JavBusScraper(BaseMetadataScraper):
 
     @staticmethod
     def is_valid(webdata: WebData):
-        if webdata.soup.find(class_="alert-danger") or webdata.soup.find(
-            text="No Result Found!"
-        ):
+        # if webdata.soup.find(class_="alert-danger") or webdata.soup.find(
+        #     text="No Result Found!"
+        # ):
+        if webdata.soup.find(text="No Result Found!"):
             raise ValueError("Invalid data")
         if JavBusScraper.is_multiple(webdata):
             raise ValueError("Multiple results found")
