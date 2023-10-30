@@ -408,14 +408,14 @@ def is_video(path):
 
 
 class Regexes:
+    PART_REGEX = r"(?:[-_\s](\d+)|\s+-\s+pt(\d+))?"
     FC2 = re.compile(
-        r"(?:fc2-ppv|fc2 ppv|fc2_PPV|FC2PPV)[-_\s]?(\d+)(?:[_\s](\d+)|\s+-\s+pt(\d+))?",
+        r"(?:fc2-ppv|fc2 ppv|fc2_PPV|FC2PPV)[-_\s]?(\d+)" + PART_REGEX,
         re.IGNORECASE,
     )
-    JAV = re.compile(r"(\w+)-(\d+)(?:[-_\s](\d+)|\s+-\s+pt(\d+))?", re.IGNORECASE)
-    JAV_PREFIX = re.compile(
-        r"\d{3}(\w+)-(\d+)(?:[-_\s](\d+)|\s+-\s+pt(\d+))?", re.IGNORECASE
-    )
+    JAV = re.compile(r"(\w+)-(\d+)" + PART_REGEX, re.IGNORECASE)
+    JAV_PREFIX = re.compile(r"\d{3}(\w+)-(\d+)" + PART_REGEX, re.IGNORECASE)
+    CARIB = re.compile(r"(\d{6})[-_](\d{2,3})" + PART_REGEX, re.IGNORECASE)
 
 
 def make_folder_from_fanart(img: Image.Image | str | Path, outpath: str | Path):
