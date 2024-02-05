@@ -22,7 +22,7 @@ class AVBaseExtractor(BaseMetadataExtractor):
             self._container.find(
                 "script", id="__NEXT_DATA__", type="application/json"
             ).text
-        )
+        )["props"]["pageProps"]
 
     def check_valid(self) -> None:
         a = True
@@ -31,11 +31,11 @@ class AVBaseExtractor(BaseMetadataExtractor):
 
     @cached_property
     def id(self) -> str:
-        return self._container.find("title").text.split(":")[0].strip()
+        return self.json_data["work"]["work_id"]
 
     @cached_property
     def title(self) -> str:
-        return self._container.find("h1").text
+        return self.json_data["work"]["title"]
 
     @property
     def producer(self) -> str:
@@ -61,22 +61,21 @@ class AVBaseExtractor(BaseMetadataExtractor):
 
     @property
     def actors(self) -> list:
-        container = self._container.find(string="出演者・メモ")
-        if not container:
-            return []
-
-        actor_tags = container.parent.parent.find_all("a")
-        return [actor.find("span").text for actor in actor_tags]
+        cast = self.json_data["work"]["casts"]
+        res = []
+        for _dict in cast:
+            name = _dict["actor"]["name"]
+            res.append(name)
+        return res
 
     @property
     def tags(self) -> list[tuple[str, str]]:
         """Returns a list of tuples of (tag_id, tag_name)
         Tag name can vary across time as this often gets updated
         """
-        container = self._container.find(string="タグ・説明文")
-        tags = container.parent.parent.find_next_sibling().find_all("a")
+        tags = self.json_data["work"]["genres"]
 
-        return [(tag["href"].split("/")[-1], tag.text.strip()) for tag in tags if tag]
+        return [(tag["name"], tag["name"]) for tag in tags if tag["name"]]
 
     @property
     def release_date(self) -> date | None:
@@ -98,22 +97,10 @@ class AVBaseExtractor(BaseMetadataExtractor):
 
     @property
     def cover_url(self) -> str:
-        cover = self._container.find("img")
-        href = cover["src"]
-        if not href:
-            return ""
-        return self.webdata.clean_url_link(href)
+        return self.json_data["work"]["products"][0].get("image_url", "")
 
     @property
     def thumbnail_urls(self) -> list[str]:
-        container = self._container.find(
-            _class="w-full bg-base-300 md:basis-64 flex flex-col"
-        )
-        raise
-        if not container:
-            return []
-        thumb_container = container.find_next_sibling()
-        thumbs = thumb_container.find_all("a")
-        if not thumbs:
-            return []
-        return [self.webdata.clean_url_link(thumb["href"]) for thumb in thumbs]
+        thumbnails = self.json_data["work"]["products"][0].get("sample_image_urls", [])
+        res = [i.get("l", i.get("s", None)) for i in thumbnails]
+        return [i for i in res if i]
