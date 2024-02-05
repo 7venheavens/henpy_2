@@ -3,11 +3,13 @@ from party_downloader.metadata.scrapers.base_metadata_scraper import BaseMetadat
 from pathlib import Path
 from party_downloader.models.web_data import WebData
 from party_downloader.helpers import Regexes
+import pdb
+from json import loads
 
 
 # This should probably pull from some more generic family of scrapers
 class AVBaseScraper(BaseMetadataScraper):
-    COMPONENT_REGEX = Regexes.JAV
+    COMPONENT_REGEX = Regexes.JAV_NOHYPHEN
     SEARCH_TEMPLATE = "https://www.avbase.net/works?q={id}"
 
     def get_id_components(
@@ -32,9 +34,19 @@ class AVBaseScraper(BaseMetadataScraper):
 
     @staticmethod
     def is_multiple(webdata: WebData):
-        core = webdata.soup.find(class_="grid sm:grid-cols-2 gap-4")
-        targets = list(core.children)
-        return len(targets) > 1
+        json_data = loads(
+            webdata.soup.find(
+                "script", id="__NEXT_DATA__", type="application/json"
+            ).text
+        )
+        try:
+            new_json_data = json_data["props"]["pageProps"]["works"]
+        except:
+            new_json_data = json_data["props"]["pageProps"]["work"]
+            return False
+        if len(new_json_data) > 1:
+            pdb.set_trace()
+        return len(new_json_data) > 1
 
     @staticmethod
     def is_valid(webdata: WebData):
@@ -48,10 +60,17 @@ class AVBaseScraper(BaseMetadataScraper):
 
     @staticmethod
     def get_target_from_single_result(webdata: WebData):
-        target = webdata.soup.find(class_="grid sm:grid-cols-2 gap-4").find("div")
-        link = target.find_all("div", recursive=False)[1].find_all("a", href=True)[-1]
+        json_data = loads(
+            webdata.soup.find(
+                "script", id="__NEXT_DATA__", type="application/json"
+            ).text
+        )
+        try:
+            json_data = json_data["props"]["pageProps"]["works"][0]
+        except:
+            json_data = json_data["props"]["pageProps"]["work"]
 
-        return link.attrs["href"]
+        return f"/works/{json_data['work_id']}"
 
     def search(self, query: str) -> WebData:
         res = WebData(self.SEARCH_TEMPLATE.format(id=query))
@@ -60,6 +79,5 @@ class AVBaseScraper(BaseMetadataScraper):
         # if it's a single, we need to actually go to the page itself so we can unpack it
         link = self.get_target_from_single_result(res)
         # TODO: add a check to identify probable mismatches
-        res = WebData(link)
-
+        res = WebData(res.root_url + link)
         return res
