@@ -7,6 +7,7 @@ from party_downloader.metadata.extractors import (
     JavLibraryExtractor,
     JavBusExtractor,
     JavDBExtractor,
+    AVBaseExtractor,
 )
 from party_downloader.metadata.scrapers import (
     FC2Scraper,
@@ -15,6 +16,7 @@ from party_downloader.metadata.scrapers import (
     JAVLibraryScraper,
     JavBusScraper,
     JavDBScraper,
+    AVBaseScraper,
 )
 from pathlib import Path
 import json
@@ -23,7 +25,7 @@ from party_downloader.helpers import make_folder_from_fanart, Regexes
 import logging
 
 
-choices = ["fc2", "msin", "javlibrary", "javbus", "javdb"]
+choices = ["fc2", "msin", "javlibrary", "javbus", "javdb", "avbase"]
 
 
 scrapers: dict[str, BaseMetadataScraper] = {
@@ -32,6 +34,7 @@ scrapers: dict[str, BaseMetadataScraper] = {
     "javlibrary": JAVLibraryScraper(),
     "javbus": JavBusScraper(),
     "javdb": JavDBScraper(),
+    "avbase": AVBaseScraper(),
 }
 
 extractors = {
@@ -40,11 +43,13 @@ extractors = {
     "javlibrary": JavLibraryExtractor,
     "javbus": JavBusExtractor,
     "javdb": JavDBExtractor,
+    "avbase": AVBaseExtractor,
 }
 
 regexes = {
     "fc2": Regexes.FC2,
     "jav": Regexes.JAV,
+    "avbase": Regexes.JAV_NOHYPHEN,
     "jav_prefix": Regexes.JAV_PREFIX,
     "carib": Regexes.CARIB,
 }

@@ -4,3 +4,5 @@ from .javlibrary_extractor import JavLibraryExtractor
 from .base_metadata_extractor import BaseMetadataExtractor
 from .msin_extractor import MSINExtractor
 from .jav_db_extractor import JavDBExtractor
+
+from .avbase_extractor import AVBaseExtractor
