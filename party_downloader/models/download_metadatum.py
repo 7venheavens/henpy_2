@@ -4,7 +4,7 @@ from urllib.parse import urlparse, unquote
 
 @dataclass
 class DownloadMetadatum:
-    """Dataclass that contains the full set of information necessary to performa download"""
+    """Dataclass that contains the full set of information necessary to perform a download"""
 
     path: str
     filetype: str
