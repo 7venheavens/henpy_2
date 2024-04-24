@@ -26,6 +26,8 @@ class JAVLibraryScraper(BaseMetadataScraper):
 
     @staticmethod
     def is_valid(webdata: WebData):
+        if JAVLibraryScraper.is_multiple(webdata):
+            raise ValueError("Multiple results found")
         if webdata.soup.find(text="Search returned no result."):
             raise ValueError("Invalid data")
 
