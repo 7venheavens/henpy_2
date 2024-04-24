@@ -22,7 +22,7 @@ class AVBaseScraper(BaseMetadataScraper):
             raise Exception(f"Unable to extract ids: {file.stem}")
 
         if strip_hyphens:
-            id = f"{groups[0][0].upper()}{groups[0][1]}"
+            id = f"{groups[0][0].upper()}-{groups[0][1]}"
         else:
             id = f"{groups[0][0].upper()}-{groups[0][1]}"
         part = None
@@ -42,7 +42,6 @@ class AVBaseScraper(BaseMetadataScraper):
         try:
             new_json_data = json_data["props"]["pageProps"]["works"]
         except:
-            new_json_data = json_data["props"]["pageProps"]["work"]
             return False
         if len(new_json_data) > 1:
             pdb.set_trace()
@@ -68,11 +67,17 @@ class AVBaseScraper(BaseMetadataScraper):
         try:
             json_data = json_data["props"]["pageProps"]["works"][0]
         except:
-            json_data = json_data["props"]["pageProps"]["work"]
+            try:
+                json_data = json_data["props"]["pageProps"]["work"]
+            except:
+                raise
+        if json_data["prefix"]:
+            return f"/works/{json_data['prefix']}:{json_data['work_id']}"
 
         return f"/works/{json_data['work_id']}"
 
     def search(self, query: str) -> WebData:
+        print(f"Searching for {self.SEARCH_TEMPLATE.format(id=query)}")
         res = WebData(self.SEARCH_TEMPLATE.format(id=query))
         self.is_valid(res)
 
