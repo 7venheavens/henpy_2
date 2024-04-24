@@ -1,15 +1,56 @@
 from __future__ import annotations
-from party_downloader.metadata.extractors import BaseMetadataExtractor
-from abc import ABC, abstractmethod
+
+from abc import ABC
 from pathlib import Path
-import os
+from time import sleep
 from party_downloader.models.web_data import WebData
-import shutil
-import json
-import re
-from typing import Pattern
+
+from typing import Literal, Pattern
 
 import requests
+from seleniumwire import webdriver
+
+# from seleniumwire.webdriver import ChromeService
+from selenium.webdriver.chrome.service import Service as ChromeService
+
+# from selenium.webdriver.chrome.service import Service as ChromeService
+
+
+class SeleniumSession:
+    def __init__(self, driver_path):
+        self.headers = {}
+
+        self.driver = webdriver.Chrome(
+            options=webdriver.ChromeOptions(),
+            service=ChromeService(driver_path),
+        )
+        self.driver.request_interceptor = self.interceptor
+
+    @property
+    def cookies(self):
+        class CookieJar:
+            @classmethod
+            def set(self, key, value, **kwargs):
+                self.driver.add_cookie({"name": key, "value": value, **kwargs})
+
+        return self._cookies
+
+    def interceptor(self, request):
+        for key, value in self.headers.items():
+            request.headers[key] = value
+
+    def get(self, url):
+        self.driver.get(url)
+        if "Enable JavaScript and cookies to continue" in self.driver.page_source:
+            print("Waiting for user input. Please resolve the captcha.")
+            input("Press enter to continue")
+
+        print(self.driver.page_source)
+        # mocks the requests response
+        resp = requests.Response()
+        resp.url = self.driver.current_url
+        resp._content = self.driver.page_source.encode("utf-8")
+        return resp
 
 
 class BaseMetadataScraper(ABC):
@@ -21,8 +62,15 @@ class BaseMetadataScraper(ABC):
     SEARCH_TEMPLATE: str = "https://example.com/search?q={}"
     OUTPUT_FORMAT: str = "{id} - [{studio}] - {title}"
 
-    def __init__(self):
-        self.session = requests.Session()
+    def __init__(
+        self, engine: Literal["requests", "selenium"] = "requests", driver_path=None
+    ):
+        if engine == "requests":
+            self.session = requests.Session()
+        elif engine == "selenium":
+            if not driver_path:
+                raise ValueError("Driver path required for selenium")
+            self.session = SeleniumSession(driver_path=driver_path)
 
     def get_id_components(self, file: str | Path) -> tuple[str, str] | None:
         """Gets the video id components from a given filename"""
@@ -61,7 +109,7 @@ class BaseMetadataScraper(ABC):
 
     def search(self, query: str) -> WebData:
         req = self.session.get(self.SEARCH_TEMPLATE.format(query))
-        res = WebData(req.url, req.text)
+        res = WebData(req.url, req.text, session=self.session)
         # check if is valid
         self.is_valid(res)
         return res

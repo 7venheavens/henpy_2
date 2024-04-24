@@ -11,13 +11,17 @@ class WebData:
 
     URL_KEY_REGEX = None
 
-    def __init__(self, url, page_data=None):
+    def __init__(self, url, page_data=None, session=None):
         self._page_data = None
         self._soup = None
         self.url = url
         self.parsed_url = urlparse(url)
         if page_data:
             self._page_data = page_data
+        if session:
+            self.session = session
+        else:
+            self.session = requests.Session()
 
     def __repr__(self):
         return f"<WebData: {self.parsed_url.geturl()}>"
@@ -34,7 +38,7 @@ class WebData:
         # lazily gets the page data when required
         if not self._page_data:
             logger.debug(f"Getting page data for {self.parsed_url.geturl()}")
-            resp = requests.get(self.parsed_url.geturl())
+            resp = self.session.get(self.parsed_url.geturl())
             self._page_data = resp.text
 
         return self._page_data

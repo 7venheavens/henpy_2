@@ -7,7 +7,7 @@ from party_downloader.helpers import Regexes
 
 class JAVLibraryScraper(BaseMetadataScraper):
     COMPONENT_REGEX = Regexes.JAV
-    SEARCH_TEMPLATE = "https://www.javlibrary.com/en/vl_searchbyid.php?keyword={id}"
+    SEARCH_TEMPLATE = "https://www.javlibrary.com/en/vl_searchbyid.php?keyword={}"
 
     def get_id_components(self, file: str | Path) -> tuple[str, str] | None:
         file = Path(file)
@@ -35,8 +35,3 @@ class JAVLibraryScraper(BaseMetadataScraper):
     def is_multiple(webdata: WebData):
         videos = webdata.soup.find_all(class_="video")
         return len(videos) > 1
-
-    def search(self, query: str) -> WebData:
-        res = WebData(self.SEARCH_TEMPLATE.format(id=query))
-        self.is_valid(res)
-        return res

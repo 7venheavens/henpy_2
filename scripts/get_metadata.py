@@ -29,12 +29,12 @@ choices = ["fc2", "msin", "javlibrary", "javbus", "javdb", "avbase"]
 
 
 scrapers: dict[str, BaseMetadataScraper] = {
-    "fc2": FC2Scraper(),
-    "msin": MSINScraper(),
-    "javlibrary": JAVLibraryScraper(),
-    "javbus": JavBusScraper(),
-    "javdb": JavDBScraper(),
-    "avbase": AVBaseScraper(),
+    "fc2": FC2Scraper,
+    "msin": MSINScraper,
+    "javlibrary": JAVLibraryScraper,
+    "javbus": JavBusScraper,
+    "javdb": JavDBScraper,
+    "avbase": AVBaseScraper,
 }
 
 extractors = {
@@ -108,18 +108,27 @@ def main(
     sleep,
     dry_run=False,
     override_regex=None,
+    cookies: dict = {},
+    headers: dict = {},
+    engine="requests",
+    webdriver_path=None,
 ):
-    scraper = scrapers.get(target_type)
+    scraper = scrapers.get(target_type)(engine=engine, driver_path=webdriver_path)
     if not scraper:
         raise ValueError("Provide a valid target type")
 
     if override_regex:
         scraper.COMPONENT_REGEX = override_regex
+    for cookie in cookies:
+        scraper.session.cookies.set(**cookie)
+
+    if headers:
+        scraper.session.headers.update(headers)
 
     target_dir = Path(target_dir)
 
     holder, unprocessed = aggregate_files(target_dir, scraper)
-
+    print(f"Beginning processing of {len(holder)} videos")
     for name, file_data in holder.items():
         print(f"Processing video: {name}")
         # Check if existing data exists, and use the previous load
@@ -186,9 +195,44 @@ if __name__ == "__main__":
         help="Reprocess the target directory, using only existing data",
         default=False,
     )
+    parser.add_argument(
+        "--cookies",
+        help="Cookies to pass to requests",
+        default=None,
+    )
+    parser.add_argument(
+        "--headers",
+        help="Headers to pass to requests",
+        default=None,
+    )
+    parser.add_argument(
+        "--webdriver-path",
+        help="Path to the webdriver for selenium",
+        default=None,
+    )
+    parser.add_argument(
+        "--engine",
+        help="Engine to use for scraping",
+        choices=["requests", "selenium"],
+        default="requests",
+    )
     args = parser.parse_args()
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
+
+    if args.cookies and args.cookies.endswith(".json"):
+        with open(args.cookies, "r") as f:
+            cookies = json.load(f)
+
+    else:
+        cookies = json.loads(args.cookies) if args.cookies else {}
+
+    if args.headers and args.headers.endswith(".json"):
+        with open(args.headers, "r") as f:
+            headers = json.load(f)
+
+    else:
+        headers = json.loads(args.headers) if args.headers else {}
 
     if args.reprocess:
         reprocess_dir(
@@ -208,4 +252,8 @@ if __name__ == "__main__":
             args.sleep,
             dry_run=args.dry_run,
             override_regex=regexes.get(args.override_regex),
+            cookies=cookies,
+            headers=headers,
+            engine=args.engine,
+            webdriver_path=args.webdriver_path,
         )
