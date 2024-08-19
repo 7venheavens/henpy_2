@@ -145,6 +145,8 @@ def main(
             webdata = scraper.process(file_data[0][0])
         except ValueError as e:
             print(f"Could not process video: {name}, {e}")
+            if fail_fast:
+                raise e
             continue
         extractor = extractors[args.target_type](webdata)
         for path, part in file_data:
@@ -221,6 +223,16 @@ if __name__ == "__main__":
         choices=["requests", "selenium"],
         default="requests",
     )
+    parser.add_argument(
+        "--binary-path",
+        help="Path to the browser binary for selenium",
+        default=None,
+    )
+    parser.add_argument(
+        "--fail-fast",
+        action="store_true",
+        help="Fail fast on errors",
+    )
     args = parser.parse_args()
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
@@ -261,4 +273,6 @@ if __name__ == "__main__":
             headers=headers,
             engine=args.engine,
             webdriver_path=args.webdriver_path,
+            binary_path=args.binary_path,
+            fail_fast=args.fail_fast,
         )
