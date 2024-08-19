@@ -25,7 +25,7 @@ class JavBusExtractor(BaseMetadataExtractor):
         super().__init__(webdata)
         # Soup derivatives for ease of use
         self._container = webdata.soup.find("div", class_="container")
-        self._info = self._container.find("div", class_="info")
+        self._info = webdata.soup.find(True, {"class": ["info"]})
         # Get the singleton data (non-list)
         holder = self._info.find_all("span", class_="header")
         self._singletons = {}
