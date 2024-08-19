@@ -415,7 +415,7 @@ class Regexes:
     )
     JAV = re.compile(r"(\w+)-(\d+)" + PART_REGEX, re.IGNORECASE)
     JAV_NOHYPHEN = re.compile(r"([a-zA-Z]+)(\d+)" + PART_REGEX, re.IGNORECASE)
-    JAV_PREFIX = re.compile(r"\d{3}(\w+)-(\d+)" + PART_REGEX, re.IGNORECASE)
+    JAV_PREFIX = re.compile(r"(?:\d{3})?(\w+)-(\d+)" + PART_REGEX, re.IGNORECASE)
     CARIB = re.compile(r"(\d{6})[-_](\d{2,3})" + PART_REGEX, re.IGNORECASE)
 
 
