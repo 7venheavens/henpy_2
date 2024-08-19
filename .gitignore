@@ -161,3 +161,8 @@ cython_debug/
 
 output/*
 .vscode
+
+# Misc
+*/temp/*
+*/placeholder*
+misc/*
