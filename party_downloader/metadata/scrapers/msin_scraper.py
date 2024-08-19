@@ -12,8 +12,8 @@ class MSINScraper(BaseMetadataScraper):
     COMPONENT_REGEX = Regexes.FC2
     SEARCH_TEMPLATE = "https://db.msin.jp/branch/search?sort=movie&str={}"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.session.cookies.set("age", "off")
 
     def get_id_components(self, file: str | Path) -> tuple[str, str] | None:
@@ -24,7 +24,7 @@ class MSINScraper(BaseMetadataScraper):
 
     @staticmethod
     def is_multiple(webdata: WebData):
-        res = re.findall(f"\w+\s+の検索結果\s+\d+件", webdata.page_data)
+        res = re.findall("\w+\s+の検索結果\s+\d+件", webdata.page_data)
         return bool(res)
 
     @staticmethod
