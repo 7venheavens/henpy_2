@@ -1,0 +1,2 @@
+class MultipleResultsError(ValueError):
+    pass
