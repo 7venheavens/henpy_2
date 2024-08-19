@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from pathlib import Path
 from time import sleep
+from party_downloader.errors import MultipleResultsError
 from party_downloader.models.web_data import WebData
 
 from typing import Literal, Pattern
@@ -12,40 +13,69 @@ from seleniumwire import webdriver
 
 # from seleniumwire.webdriver import ChromeService
 from selenium.webdriver.chrome.service import Service as ChromeService
+import urllib3
+from selenium.webdriver.remote.remote_connection import LOGGER
+import logging
+
+LOGGER.setLevel(logging.WARNING)
 
 # from selenium.webdriver.chrome.service import Service as ChromeService
 
 
 class SeleniumSession:
-    def __init__(self, driver_path):
+    def __init__(
+        self, driver_path, first_load_url=None, binary_path=None, cookies=None
+    ):
         self.headers = {}
+        options = webdriver.ChromeOptions()
+        if binary_path:
+            options.binary_location = binary_path
+
+        options.add_argument("--no-sandbox")
+        options.add_argument("--remote-debugging-port=9222")
+        options.add_experimental_option("excludeSwitches", ["enable-logging"])
 
         self.driver = webdriver.Chrome(
-            options=webdriver.ChromeOptions(),
+            options=options,
             service=ChromeService(driver_path),
         )
+        # Add the requisite cookies, then get to the base page
+        if first_load_url:
+            self.driver.get(first_load_url)
+        for cookie in cookies or []:
+            self.driver.add_cookie(cookie)
+
+        sleep(1)
         self.driver.request_interceptor = self.interceptor
+
+        if first_load_url:
+            self.driver.get(first_load_url)
 
     @property
     def cookies(self):
         class CookieJar:
             @classmethod
-            def set(self, key, value, **kwargs):
-                self.driver.add_cookie({"name": key, "value": value, **kwargs})
+            def set(cls, name, value, **kwargs):
+                print(name, value, kwargs)
+                self.driver.add_cookie({"name": name, "value": value, **kwargs})
 
-        return self._cookies
+        print("Cookies:", self.driver.get_cookies())
+
+        return CookieJar
 
     def interceptor(self, request):
         for key, value in self.headers.items():
             request.headers[key] = value
 
     def get(self, url):
-        self.driver.get(url)
+        # Handle the first get, by getting the root url. This seems to work better with cloudflare
+        parsed = urllib3.util.url.parse_url(url)
+        self.driver.get(parsed.scheme + "://" + parsed.host)
         if "Enable JavaScript and cookies to continue" in self.driver.page_source:
             print("Waiting for user input. Please resolve the captcha.")
             input("Press enter to continue")
 
-        print(self.driver.page_source)
+        self.driver.get(url)
         # mocks the requests response
         resp = requests.Response()
         resp.url = self.driver.current_url
@@ -63,14 +93,27 @@ class BaseMetadataScraper(ABC):
     OUTPUT_FORMAT: str = "{id} - [{studio}] - {title}"
 
     def __init__(
-        self, engine: Literal["requests", "selenium"] = "requests", driver_path=None
+        self,
+        engine: Literal["requests", "selenium"] = "requests",
+        driver_path=None,
+        binary_path=None,
+        cookies=None,
     ):
         if engine == "requests":
             self.session = requests.Session()
+            if cookies:
+                for cookie in cookies:
+                    self.session.cookies.set(**cookie)
         elif engine == "selenium":
             if not driver_path:
                 raise ValueError("Driver path required for selenium")
-            self.session = SeleniumSession(driver_path=driver_path)
+            parsed = urllib3.util.url.parse_url(self.SEARCH_TEMPLATE)
+            self.session = SeleniumSession(
+                driver_path=driver_path,
+                first_load_url=parsed.scheme + "://" + parsed.host,
+                binary_path=binary_path,
+                cookies=cookies,
+            )
 
     def get_id_components(self, file: str | Path) -> tuple[str, str] | None:
         """Gets the video id components from a given filename"""
@@ -102,6 +145,10 @@ class BaseMetadataScraper(ABC):
         if False:
             raise ValueError("Invalid data")
 
+    def get_single_from_multiple(self, data) -> str:
+        """Gets the single video from a multiple video page"""
+        pass
+
     @classmethod
     def verify_age(cls, webdata):
         """Verifies the age of the user"""
@@ -111,7 +158,12 @@ class BaseMetadataScraper(ABC):
         req = self.session.get(self.SEARCH_TEMPLATE.format(query))
         res = WebData(req.url, req.text, session=self.session)
         # check if is valid
-        self.is_valid(res)
+        try:
+            self.is_valid(res)
+        except MultipleResultsError:
+            url = self.get_single_from_multiple(res)
+            res = WebData(url, session=self.session)
+
         return res
 
     # overall method

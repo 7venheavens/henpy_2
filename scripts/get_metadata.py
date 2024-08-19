@@ -108,19 +108,24 @@ def main(
     sleep,
     dry_run=False,
     override_regex=None,
-    cookies: dict = {},
+    cookies: list[dict] = {},
     headers: dict = {},
     engine="requests",
     webdriver_path=None,
+    binary_path=None,
+    fail_fast=False,
 ):
-    scraper = scrapers.get(target_type)(engine=engine, driver_path=webdriver_path)
+    scraper = scrapers.get(target_type)(
+        engine=engine,
+        driver_path=webdriver_path,
+        binary_path=binary_path,
+        cookies=cookies,
+    )
     if not scraper:
         raise ValueError("Provide a valid target type")
 
     if override_regex:
         scraper.COMPONENT_REGEX = override_regex
-    for cookie in cookies:
-        scraper.session.cookies.set(**cookie)
 
     if headers:
         scraper.session.headers.update(headers)
