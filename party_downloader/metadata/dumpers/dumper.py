@@ -1,14 +1,10 @@
 from __future__ import annotations
 from party_downloader.metadata.extractors import BaseMetadataExtractor
-from abc import ABC, abstractmethod
 from pathlib import Path
-import os
-from party_downloader.models.web_data import WebData
+
 import shutil
 import json
 import re
-
-import requests
 
 
 class Dumper:
@@ -17,27 +13,36 @@ class Dumper:
     FOLDER_OUTPUT_FORMAT_SHORTEST: str = "{id}"
     FILE_OUTPUT_FORMAT: str = "{id}"
 
+    def __init__(self, session) -> None:
+        self.session = session
+
     # Application of the extractor
-    @classmethod
     def _dump_media(
-        cls,
+        self,
         extractor: BaseMetadataExtractor,
         outdir: str,
         dump_thumbnails: bool = True,
     ):
         cover_url = extractor.cover_url
-        if cover_url:
-            cover_path = outdir / "folder.jpg"
-            if not cover_path.exists():
+        cover_path = outdir / "folder.jpg"
+        if cover_url and not cover_path.exists():
+            try:
+                print("Download flow")
+                self.session.download_file(cover_url, cover_path)
+            except AttributeError:
+                print("Direct write flow")
                 with open(cover_path, "wb") as f:
-                    f.write(requests.get(cover_url).content)
+                    f.write(self.session.get(cover_url).content)
 
         background_url = extractor.background_url
+        background_path = outdir / "fanart.jpg"
         if background_url:
-            background_path = outdir / "fanart.jpg"
-            if not background_path.exists():
-                with open(background_path, "wb") as f:
-                    f.write(requests.get(background_url).content)
+            try:
+                self.session.download_file(background_url, background_path)
+            except AttributeError:
+                if not background_path.exists():
+                    with open(background_path, "wb") as f:
+                        f.write(self.session.get(background_url).content)
 
         # Dump the thumbnails
         if not dump_thumbnails:
@@ -48,10 +53,9 @@ class Dumper:
             thumb_path = thumb_dir / f"{i}.jpg"
             if not thumb_path.exists():
                 with open(thumb_path, "wb") as f:
-                    f.write(requests.get(thumb_url).content)
+                    f.write(self.session.get(thumb_url).content)
 
-    @classmethod
-    def _dump_run_data(cls, extractor: BaseMetadataExtractor, outdir):
+    def _dump_run_data(self, extractor: BaseMetadataExtractor, outdir):
         html_name = f"{outdir.stem}.html"
         with open(outdir / html_name, "w", encoding="utf-8") as f:
             f.write(extractor.webdata.page_data)
@@ -62,17 +66,16 @@ class Dumper:
         with open(outdir / "run.json", "w", encoding="utf-8") as f:
             json.dump(run_data, f)
 
-    @classmethod
-    def _prepare_name(cls, metadata):
+    def _prepare_name(self, metadata):
         """Returns the output name for the metadata"""
         # Figure out which template to use intelligently, using the length of the title
         # This is because ZFS and some other file systems have a limit on the length of the file name (255 bytes)
-        name = cls.FOLDER_OUTPUT_FORMAT.format(**metadata)
+        name = self.FOLDER_OUTPUT_FORMAT.format(**metadata)
         # Can be long, need some checks for this
         if len(name.encode("utf-8")) > 250:
-            name = cls.FOLDER_OUTPUT_FORMAT_SHORT.format(**metadata)
+            name = self.FOLDER_OUTPUT_FORMAT_SHORT.format(**metadata)
         if len(name.encode("utf-8")) > 250:
-            name = cls.FOLDER_OUTPUT_FORMAT_SHORTEST.format(**metadata)
+            name = self.FOLDER_OUTPUT_FORMAT_SHORTEST.format(**metadata)
         # Clean out illegal characters
         name = re.sub(r"[<>:\"/\\|?*]", "", name)
         name = name.replace("\u3000", " ")
@@ -83,9 +86,8 @@ class Dumper:
         outdir.mkdir(exist_ok=True)
         (outdir / "thumbs").mkdir(exist_ok=True)
 
-    @classmethod
     def process(
-        cls,
+        self,
         file_path: str | Path,
         extractor,
         outdir: str | Path,
@@ -103,19 +105,20 @@ class Dumper:
         # Maybe generate the outdir from the name
         data = extractor.metadata
         data["title"] = data["title"].replace(f" {extractor.id}", "")
-        name = cls._prepare_name(data)
+        name = self._prepare_name(data)
         outdir = Path(outdir) / name
         try:
-            cls._prepare_outdir(outdir)
+            self._prepare_outdir(outdir)
         except Exception as e:
             print(f"Could not prepare outdir: {outdir}. Exception: {e}")
             return
 
-        cls._dump_media(extractor, outdir, dump_thumbnails=dump_thumbnails)
+        self._dump_media(extractor, outdir, dump_thumbnails=dump_thumbnails)
+        raise
 
-        cls._dump_run_data(extractor, outdir)
+        self._dump_run_data(extractor, outdir)
 
-        base_name = cls.FILE_OUTPUT_FORMAT.format(**extractor.metadata)
+        base_name = self.FILE_OUTPUT_FORMAT.format(**extractor.metadata)
         with open(outdir / f"{base_name}.nfo", "w", encoding="utf-8") as f:
             f.write(extractor.metadata_nfo)
         if part:

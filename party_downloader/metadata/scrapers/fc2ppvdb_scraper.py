@@ -10,20 +10,19 @@ FC2_REGEX = re.compile(r"fc2-ppv-(\d+)", re.IGNORECASE)
 
 class FC2PPVDBScraper(BaseMetadataScraper):
     COMPONENT_REGEX = Regexes.FC2
-    SEARCH_TEMPLATE = "https://www.fc2ppvdb.com/search?stype=title&keyword={id_num}"
+    SEARCH_TEMPLATE = "https://www.fc2ppvdb.com/search?stype=title&keyword={}"
 
     @classmethod
     def get_id_components(cls, file: str | Path) -> tuple[str, str] | None:
-        res = super().get_id_components(file)
+        print(file)
+        res = super().get_id_components(cls, file)
         if res:
             res["name"] = f'fc2-ppv-{res["id"]}'
         return res
 
     def is_valid(self, webdata: WebData):
-        if webdata.soup.find(class_="items_notfound_wp"):
-            raise ValueError("Invalid data")
+        if webdata.soup.find(text=re.compile("Search Result For: ")):
+            raise ValueError("No results found")
 
     def search(self, query: str) -> WebData:
-        res = WebData(self.SEARCH_TEMPLATE_TEMPLATE.format(id_num=query))
-        self.is_valid(res)
-        return res
+        return super().search(query)

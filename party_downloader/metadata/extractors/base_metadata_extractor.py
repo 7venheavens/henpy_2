@@ -126,6 +126,7 @@ class BaseMetadataExtractor(ABC):
             }
         except:
             print(f"Failed for webdata for {self.webdata.url}")
+            # print(self.webdata.soup.prettify())
             raise
 
     @cached_property

@@ -8,6 +8,7 @@ from party_downloader.metadata.extractors import (
     JavBusExtractor,
     JavDBExtractor,
     AVBaseExtractor,
+    FC2PPVDBExtractor,
 )
 from party_downloader.metadata.scrapers import (
     FC2Scraper,
@@ -17,19 +18,18 @@ from party_downloader.metadata.scrapers import (
     JavBusScraper,
     JavDBScraper,
     AVBaseScraper,
+    FC2PPVDBScraper,
 )
 from pathlib import Path
 import json
 from party_downloader.models.web_data import WebData
 from party_downloader.helpers import make_folder_from_fanart, Regexes
 import logging
-
-
-choices = ["fc2", "msin", "javlibrary", "javbus", "javdb", "avbase"]
-
+from party_downloader.utils.custom_sessions import setup_session
 
 scrapers: dict[str, BaseMetadataScraper] = {
     "fc2": FC2Scraper,
+    "fc2ppvdb": FC2PPVDBScraper,
     "msin": MSINScraper,
     "javlibrary": JAVLibraryScraper,
     "javbus": JavBusScraper,
@@ -39,12 +39,16 @@ scrapers: dict[str, BaseMetadataScraper] = {
 
 extractors = {
     "fc2": FC2Extractor,
+    "fc2ppvdb": FC2PPVDBExtractor,
     "msin": MSINExtractor,
     "javlibrary": JavLibraryExtractor,
     "javbus": JavBusExtractor,
     "javdb": JavDBExtractor,
     "avbase": AVBaseExtractor,
 }
+if not scrapers.keys() == extractors.keys():
+    raise ValueError("Mismatched keys in scrapers and extractors")
+choices = list(scrapers.keys())
 
 regexes = {
     "fc2": Regexes.FC2,
@@ -115,11 +119,9 @@ def main(
     binary_path=None,
     fail_fast=False,
 ):
+    session = setup_session(engine, cookies, webdriver_path, binary_path)
     scraper = scrapers.get(target_type)(
-        engine=engine,
-        driver_path=webdriver_path,
-        binary_path=binary_path,
-        cookies=cookies,
+        session=session,
     )
     if not scraper:
         raise ValueError("Provide a valid target type")
@@ -133,7 +135,7 @@ def main(
     target_dir = Path(target_dir)
 
     holder, unprocessed = aggregate_files(target_dir, scraper)
-    print(f"Beginning processing of {len(holder)} videos")
+    print(f"Beginning processing of {len(holder)} videos: Scraper={scraper}")
     for name, file_data in holder.items():
         print(f"Processing video: {name}")
         # Check if existing data exists, and use the previous load
@@ -142,18 +144,21 @@ def main(
         #         run_data = json.load(f)
         #     webdata = WebData.from_dump(outdir / run_data["dump_name"], run_data["url"])
         try:
+            print(f"Searching for video: {name}")
             webdata = scraper.process(file_data[0][0])
         except ValueError as e:
-            print(f"Could not process video: {name}, {e}")
+            print(f"Could not scrape video: {name}, {e}")
             if fail_fast:
                 raise e
             continue
+        # print("webdata:", webdata._soup)
         extractor = extractors[args.target_type](webdata)
+        dumper = Dumper(session=session)
         for path, part in file_data:
             print(f"Processing file: {path}, part: {part}")
             if dry_run:
                 continue
-            dump_dir = Dumper.process(
+            dump_dir = dumper.process(
                 file_path=path,
                 outdir=target_dir,
                 extractor=extractor,
@@ -220,7 +225,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--engine",
         help="Engine to use for scraping",
-        choices=["requests", "selenium"],
+        choices=["requests", "selenium", "seleniumbase"],
         default="requests",
     )
     parser.add_argument(
